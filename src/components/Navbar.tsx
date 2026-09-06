@@ -13,6 +13,7 @@ import {
   AlertCircle,
   FlaskConical,
   RefreshCw,
+  Zap,
 } from "lucide-react";
 
 export type NavTab =
@@ -50,166 +51,95 @@ export function Navbar({
   const isLive = enterprise?.mode === "LIVE_AMAPI";
 
   return (
-    <header className="sticky top-0 z-40 border-b border-slate-800/80 bg-slate-900/90 backdrop-blur-md">
+    <header className="sticky top-0 z-40 border-b border-white/[0.06] bg-[#0E0E11]/80 backdrop-blur-[20px]">
       <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3 sm:px-6">
-        {/* Brand & Enterprise Identity */}
+        {/* Brand */}
         <div className="flex items-center space-x-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-emerald-500 to-teal-700 shadow-md shadow-emerald-900/30">
-            <Smartphone className="h-5 w-5 text-white" />
+          <div className="relative flex h-10 w-10 items-center justify-center rounded-full bg-[#FFFDFA] shadow-sm">
+            <div className="absolute inset-0 rounded-full blur-[8px] opacity-30 bg-gradient-to-br from-[#FFB224] to-[#8B5CF6]" />
+            <Smartphone className="h-5 w-5 text-[#050507] relative z-10" />
           </div>
           <div>
             <div className="flex items-center space-x-2">
-              <span className="font-bold tracking-tight text-white sm:text-lg">
+              <span className="font-display text-[16px] tracking-[-0.02em] text-[#F5F3EF] sm:text-[18px]">
                 Android Enterprise
               </span>
-              <span className="rounded bg-slate-800 px-1.5 py-0.5 text-[10px] font-semibold text-slate-300">
+              <span className="rounded-full bg-white/[0.06] border border-white/[0.08] px-2 py-0.5 font-mono text-[9px] tracking-[0.12em] uppercase text-white/50">
                 AMAPI DPC
               </span>
             </div>
-            <p className="text-xs text-slate-400">
+            <p className="font-mono text-[11px] tracking-[0.04em] text-white/40">
               {enterprise ? enterprise.name : "Enterprise Fleet Management"}
             </p>
           </div>
         </div>
 
-        {/* Status Indicators & Action Buttons */}
-        <div className="flex items-center space-x-3">
-          {/* Mode Pill */}
+        {/* Status & Actions */}
+        <div className="flex items-center space-x-2 sm:space-x-3">
           <div
-            className={`hidden sm:flex items-center space-x-1.5 rounded-full px-3 py-1 text-xs font-medium border ${
+            className={`hidden sm:flex items-center space-x-1.5 rounded-full px-3 py-1 text-[11px] font-mono tracking-[0.06em] uppercase border backdrop-blur ${
               isLive
-                ? "bg-emerald-950/60 border-emerald-500/40 text-emerald-300"
-                : "bg-blue-950/60 border-blue-500/40 text-blue-300"
+                ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-300"
+                : "bg-[#8B5CF6]/10 border-[#8B5CF6]/20 text-[#8B5CF6]"
             }`}
           >
             {isLive ? (
-              <CheckCircle2 className="h-3.5 w-3.5 text-emerald-400" />
+              <CheckCircle2 className="h-3.5 w-3.5" />
             ) : (
-              <FlaskConical className="h-3.5 w-3.5 text-blue-400" />
+              <FlaskConical className="h-3.5 w-3.5" />
             )}
-            <span>{isLive ? "LIVE GOOGLE AMAPI" : "VERIFIED ENTERPRISE SANDBOX"}</span>
+            <span>{isLive ? "LIVE AMAPI" : "SANDBOX"}</span>
           </div>
 
-          {/* Quick QR Token */}
           <button
             onClick={onOpenQuickToken}
-            className="flex items-center space-x-1.5 rounded-lg bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white shadow-sm hover:bg-emerald-500 transition-colors"
+            className="flex items-center space-x-1.5 rounded-full bg-[#FFFDFA] px-4 py-2 text-xs font-semibold text-[#050507] shadow-sm hover:bg-white transition"
           >
             <QrCode className="h-3.5 w-3.5" />
-            <span className="hidden sm:inline">New Provisioning QR</span>
+            <span className="hidden sm:inline">New QR</span>
             <span className="sm:hidden">QR</span>
           </button>
 
-          {/* Refresh */}
           <button
             onClick={onRefresh}
             disabled={isRefreshing}
             title="Refresh Fleet Data"
-            className="rounded-lg border border-slate-700 bg-slate-800/80 p-2 text-slate-300 hover:bg-slate-700 hover:text-white transition-colors disabled:opacity-50"
+            className="rounded-full border border-white/[0.08] bg-white/[0.04] p-2.5 text-white/60 hover:bg-white/[0.08] hover:text-white transition disabled:opacity-50"
           >
-            <RefreshCw className={`h-4 w-4 ${isRefreshing ? "animate-spin text-emerald-400" : ""}`} />
+            <RefreshCw className={`h-4 w-4 ${isRefreshing ? "animate-spin text-[#FFB224]" : ""}`} />
           </button>
         </div>
       </div>
 
-      {/* Navigation Tabs */}
-      <div className="border-t border-slate-800/60 bg-slate-950/60 px-4 sm:px-6">
-        <div className="mx-auto flex max-w-7xl space-x-1 overflow-x-auto py-1 text-sm no-scrollbar">
-          <button
-            onClick={() => setActiveTab("dashboard")}
-            className={`flex items-center space-x-2 whitespace-nowrap rounded-lg px-3 py-1.5 font-medium transition-colors ${
-              activeTab === "dashboard"
-                ? "bg-slate-800 text-emerald-400 shadow-sm"
-                : "text-slate-400 hover:bg-slate-900 hover:text-slate-200"
-            }`}
-          >
-            <Activity className="h-4 w-4" />
-            <span>Fleet Overview</span>
-          </button>
-
-          <button
-            onClick={() => setActiveTab("devices")}
-            className={`flex items-center space-x-2 whitespace-nowrap rounded-lg px-3 py-1.5 font-medium transition-colors ${
-              activeTab === "devices"
-                ? "bg-slate-800 text-emerald-400 shadow-sm"
-                : "text-slate-400 hover:bg-slate-900 hover:text-slate-200"
-            }`}
-          >
-            <Smartphone className="h-4 w-4" />
-            <span>Devices & Fleet</span>
-          </button>
-
-          <button
-            onClick={() => setActiveTab("enrollment")}
-            className={`flex items-center space-x-2 whitespace-nowrap rounded-lg px-3 py-1.5 font-medium transition-colors ${
-              activeTab === "enrollment"
-                ? "bg-slate-800 text-emerald-400 shadow-sm"
-                : "text-slate-400 hover:bg-slate-900 hover:text-slate-200"
-            }`}
-          >
-            <QrCode className="h-4 w-4" />
-            <span>Enrollment & QR Hub</span>
-          </button>
-
-          <button
-            onClick={() => setActiveTab("policies")}
-            className={`flex items-center space-x-2 whitespace-nowrap rounded-lg px-3 py-1.5 font-medium transition-colors ${
-              activeTab === "policies"
-                ? "bg-slate-800 text-emerald-400 shadow-sm"
-                : "text-slate-400 hover:bg-slate-900 hover:text-slate-200"
-            }`}
-          >
-            <Shield className="h-4 w-4" />
-            <span>Policy Center</span>
-          </button>
-
-          <button
-            onClick={() => setActiveTab("commands")}
-            className={`flex items-center space-x-2 whitespace-nowrap rounded-lg px-3 py-1.5 font-medium transition-colors ${
-              activeTab === "commands"
-                ? "bg-slate-800 text-emerald-400 shadow-sm"
-                : "text-slate-400 hover:bg-slate-900 hover:text-slate-200"
-            }`}
-          >
-            <Terminal className="h-4 w-4" />
-            <span>Remote Actions</span>
-          </button>
-
-          <button
-            onClick={() => setActiveTab("logs")}
-            className={`flex items-center space-x-2 whitespace-nowrap rounded-lg px-3 py-1.5 font-medium transition-colors ${
-              activeTab === "logs"
-                ? "bg-slate-800 text-emerald-400 shadow-sm"
-                : "text-slate-400 hover:bg-slate-900 hover:text-slate-200"
-            }`}
-          >
-            <Activity className="h-4 w-4" />
-            <span>Pub/Sub & Audit Log</span>
-          </button>
-
-          <button
-            onClick={() => setActiveTab("test-suite")}
-            className={`flex items-center space-x-2 whitespace-nowrap rounded-lg px-3 py-1.5 font-medium transition-colors ${
-              activeTab === "test-suite"
-                ? "bg-slate-800 text-emerald-400 shadow-sm"
-                : "text-slate-400 hover:bg-slate-900 hover:text-slate-200"
-            }`}
-          >
-            <FlaskConical className="h-4 w-4" />
-            <span>AMAPI Diagnostics</span>
-          </button>
-
-          <button
-            onClick={() => setActiveTab("settings")}
-            className={`flex items-center space-x-2 whitespace-nowrap rounded-lg px-3 py-1.5 font-medium transition-colors ${
-              activeTab === "settings"
-                ? "bg-slate-800 text-emerald-400 shadow-sm"
-                : "text-slate-400 hover:bg-slate-900 hover:text-slate-200"
-            }`}
-          >
-            <Settings className="h-4 w-4" />
-            <span>Enterprise Settings</span>
-          </button>
+      {/* Navigation Tabs - Obsidian Aurora */}
+      <div className="border-t border-white/[0.06] bg-[#050507]/60 px-4 sm:px-6">
+        <div className="mx-auto flex max-w-7xl space-x-1 overflow-x-auto py-2 text-sm no-scrollbar">
+          {[
+            { id: "dashboard", label: "Fleet Overview", icon: Activity },
+            { id: "devices", label: "Devices & Fleet", icon: Smartphone },
+            { id: "enrollment", label: "Enrollment & QR Hub", icon: QrCode },
+            { id: "policies", label: "Policy Center", icon: Shield },
+            { id: "commands", label: "Remote Actions", icon: Terminal },
+            { id: "logs", label: "Audit Log", icon: Activity },
+            { id: "test-suite", label: "Diagnostics", icon: FlaskConical },
+            { id: "settings", label: "Settings", icon: Settings },
+          ].map((tab) => {
+            const isActive = activeTab === tab.id;
+            return (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id as NavTab)}
+                className={`flex items-center space-x-2 whitespace-nowrap rounded-full px-4 py-2 font-medium transition-all text-[13px] ${
+                  isActive
+                    ? "bg-[#FFFDFA] text-[#050507] shadow-sm"
+                    : "text-white/50 hover:bg-white/[0.06] hover:text-white/80 border border-transparent hover:border-white/[0.06]"
+                }`}
+              >
+                <tab.icon className={`h-4 w-4 ${isActive ? "text-[#050507]" : ""}`} />
+                <span>{tab.label}</span>
+              </button>
+            );
+          })}
         </div>
       </div>
     </header>

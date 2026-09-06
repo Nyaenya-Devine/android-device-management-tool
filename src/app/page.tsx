@@ -191,10 +191,17 @@ export default function AppHome() {
 
   if (isLoading) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-slate-950 text-slate-100">
-        <div className="flex flex-col items-center space-y-3">
-          <RefreshCw className="h-8 w-8 animate-spin text-emerald-400" />
-          <p className="text-sm font-semibold text-slate-300">
+      <div className="flex min-h-screen items-center justify-center bg-[#050507] text-[#F5F3EF] relative overflow-hidden">
+        <div className="pointer-events-none absolute inset-0">
+          <div className="absolute top-[20%] left-[20%] w-[600px] h-[400px] rounded-full blur-[80px] opacity-[0.08] bg-[#FFB224]" />
+          <div className="absolute bottom-[20%] right-[20%] w-[500px] h-[400px] rounded-full blur-[80px] opacity-[0.06] bg-[#8B5CF6]" />
+        </div>
+        <div className="flex flex-col items-center space-y-4 relative z-10">
+          <div className="h-12 w-12 rounded-full bg-[#FFFDFA] flex items-center justify-center relative">
+            <div className="absolute inset-0 rounded-full blur-[10px] opacity-30 bg-gradient-to-br from-[#FFB224] to-[#8B5CF6]" />
+            <RefreshCw className="h-6 w-6 animate-spin text-[#050507] relative z-10" />
+          </div>
+          <p className="font-mono text-[11px] tracking-[0.14em] uppercase text-white/50">
             Initializing Android Enterprise AMAPI DPC Console...
           </p>
         </div>
@@ -203,7 +210,10 @@ export default function AppHome() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100">
+    <div className="min-h-screen bg-[#050507] text-[#F5F3EF] relative">
+      <div className="pointer-events-none fixed inset-0">
+        <div className="absolute inset-0 bg-[linear-gradient(to_right,rgba(255,255,255,0.015)_1px,transparent_1px),linear-gradient(to_bottom,rgba(255,255,255,0.015)_1px,transparent_1px)] bg-[size:64px_64px]" />
+      </div>
       {/* Top Navigation */}
       <Navbar
         activeTab={activeTab}
