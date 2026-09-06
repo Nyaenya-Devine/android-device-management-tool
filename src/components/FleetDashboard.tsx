@@ -11,7 +11,6 @@ import {
   AlertTriangle,
   CheckCircle2,
   Lock,
-  RotateCw,
   Clock,
   Layers,
   ArrowRight,
@@ -46,243 +45,209 @@ export function FleetDashboard({
   const fullyManagedCount = devices.filter((d) => d.managementMode === "FULLY_MANAGED").length;
   const workProfileCount = devices.filter((d) => d.managementMode === "WORK_PROFILE").length;
   const dedicatedCount = devices.filter((d) => d.managementMode === "DEDICATED").length;
-  const lostModeCount = devices.filter((d) => d.state === "LOST_MODE").length;
 
   const activeTokens = tokens.filter((t) => t.status === "ACTIVE").length;
 
-  // OS distribution
-  const osCount: Record<string, number> = {};
-  devices.forEach((d) => {
-    const key = d.osVersion.split(" ")[0] + " " + (d.osVersion.split(" ")[1] || "");
-    osCount[key] = (osCount[key] || 0) + 1;
-  });
-
   return (
-    <div className="space-y-6">
-      {/* Top Banner / Welcome */}
-      <div className="relative overflow-hidden rounded-2xl border border-slate-800 bg-gradient-to-r from-slate-900 via-slate-900/90 to-emerald-950/40 p-6 shadow-xl">
+    <div className="space-y-6 relative z-10">
+      {/* Welcome Banner - Obsidian Aurora */}
+      <div className="relative overflow-hidden rounded-[20px] border border-white/[0.06] bg-[#101012]/80 backdrop-blur-[20px] p-6 shadow-[0_20px_60px_rgba(0,0,0,0.5)]">
+        <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-[#FFB224]/20 to-transparent" />
+        <div className="absolute top-[-30%] right-[-10%] w-[400px] h-[300px] rounded-full blur-[60px] opacity-[0.08] bg-[#FFB224]" />
+        <div className="absolute bottom-[-20%] left-[-5%] w-[300px] h-[300px] rounded-full blur-[60px] opacity-[0.06] bg-[#8B5CF6]" />
         <div className="relative z-10 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-          <div className="space-y-1.5">
-            <div className="flex items-center space-x-2">
-              <span className="inline-flex items-center rounded-full bg-emerald-500/10 px-2.5 py-0.5 text-xs font-medium text-emerald-400 border border-emerald-500/20">
-                <Sparkles className="mr-1 h-3 w-3" /> Android Enterprise Architecture
+          <div className="space-y-2">
+            <div className="flex items-center gap-2">
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-[#FFB224]/10 border border-[#FFB224]/20 px-3 py-1 text-[11px] font-mono tracking-[0.06em] uppercase text-[#FFB224]">
+                <Sparkles className="h-3 w-3" /> Android Enterprise
               </span>
-              <span className="text-xs text-slate-400">
+              <span className="font-mono text-[11px] text-white/30">
                 ID: {enterprise?.enterpriseId || "enterprises/LC03..."}
               </span>
             </div>
-            <h1 className="text-2xl font-bold tracking-tight text-white sm:text-3xl">
+            <h1 className="font-display text-[24px] md:text-[30px] tracking-[-0.02em] text-[#F5F3EF] leading-[1.1]">
               Fleet Overview & Compliance Hub
             </h1>
-            <p className="text-sm text-slate-300 max-w-2xl">
-              Legitimate Android Management API (AMAPI) infrastructure with CloudDPC QR provisioning, fine-grained policy enforcement, real-time telemetry, and remote MDM command dispatch.
+            <p className="text-[13px] leading-[1.6] text-white/50 max-w-2xl">
+              Legitimate Android Management API infrastructure with CloudDPC QR provisioning, fine-grained policy enforcement, real-time telemetry, and remote MDM command dispatch.
             </p>
           </div>
 
           <div className="flex flex-wrap items-center gap-3">
             <button
               onClick={onOpenQuickToken}
-              className="flex items-center space-x-2 rounded-xl bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white shadow-lg shadow-emerald-950/50 hover:bg-emerald-500 transition-all hover:scale-[1.02]"
+              className="flex items-center gap-2 rounded-full bg-[#FFFDFA] px-5 py-2.5 text-[13px] font-semibold text-[#050507] shadow-sm hover:bg-white transition hover:-translate-y-0.5"
             >
               <QrCode className="h-4 w-4" />
               <span>Enroll New Device (QR)</span>
             </button>
             <button
               onClick={() => onNavigateTab("test-suite")}
-              className="flex items-center space-x-2 rounded-xl border border-slate-700 bg-slate-800/80 px-4 py-2.5 text-sm font-medium text-slate-200 hover:bg-slate-700 transition-all"
+              className="flex items-center gap-2 rounded-full border border-white/[0.08] bg-white/[0.04] px-5 py-2.5 text-[13px] font-medium text-white/70 hover:bg-white/[0.08] hover:text-white transition"
             >
-              <Zap className="h-4 w-4 text-emerald-400" />
+              <Zap className="h-4 w-4 text-[#FFB224]" />
               <span>Run Diagnostics</span>
             </button>
           </div>
         </div>
       </div>
 
-      {/* Primary KPI Metric Cards */}
+      {/* KPI Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {/* Total Fleet Card */}
-        <div className="rounded-xl border border-slate-800 bg-slate-900/70 p-5 backdrop-blur shadow-sm hover:border-slate-700 transition-colors">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold uppercase tracking-wider text-slate-400">
-              Managed Fleet
-            </span>
-            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-              <Smartphone className="h-4.5 w-4.5" />
+        {[
+          {
+            label: "Managed Fleet",
+            value: totalDevices,
+            sub: "active units",
+            icon: Smartphone,
+            accent: "amber",
+            footer: `${fullyManagedCount} Full • ${workProfileCount} BYOD • ${dedicatedCount} Kiosk`,
+          },
+          {
+            label: "Security Compliance",
+            value: `${complianceRate}%`,
+            sub: "fleet compliant",
+            icon: ShieldCheck,
+            accent: "emerald",
+            footer: `${compliantDevices} of ${totalDevices} adhering to AMAPI rules`,
+            footerIcon: CheckCircle2,
+          },
+          {
+            label: "Active CloudDPC QR Tokens",
+            value: activeTokens,
+            sub: "available tokens",
+            icon: QrCode,
+            accent: "violet",
+            footer: `${policies.length} Active Policies`,
+            action: () => onNavigateTab("enrollment"),
+            actionLabel: "Manage",
+          },
+          {
+            label: "AMAPI Cloud Gateway",
+            value: enterprise?.mode === "LIVE_AMAPI" ? "Live GCP" : "Sandbox",
+            sub: "",
+            icon: Zap,
+            accent: "cyan",
+            footer: "Pub/Sub Webhook Receiver Active",
+            dot: true,
+          },
+        ].map((card) => (
+          <div
+            key={card.label}
+            className="group relative overflow-hidden rounded-[16px] border border-white/[0.06] bg-[#101012]/80 backdrop-blur-[20px] p-5 hover:border-white/[0.12] hover:bg-[#151519] transition-all hover:-translate-y-1"
+          >
+            <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-white/[0.08] to-transparent opacity-0 group-hover:opacity-100 transition" />
+            <div className="flex items-center justify-between">
+              <span className="font-mono text-[10px] tracking-[0.12em] uppercase text-white/40">
+                {card.label}
+              </span>
+              <div className={`flex h-9 w-9 items-center justify-center rounded-full border ${
+                card.accent === 'amber' ? 'bg-[#FFB224]/10 border-[#FFB224]/20 text-[#FFB224]' :
+                card.accent === 'violet' ? 'bg-[#8B5CF6]/10 border-[#8B5CF6]/20 text-[#8B5CF6]' :
+                card.accent === 'cyan' ? 'bg-[#06B6D4]/10 border-[#06B6D4]/20 text-[#06B6D4]' :
+                'bg-emerald-500/10 border-emerald-500/20 text-emerald-400'
+              }`}>
+                <card.icon className="h-4 w-4" />
+              </div>
+            </div>
+            <div className="mt-3 flex items-baseline gap-2">
+              <span className="font-display text-[30px] leading-none tracking-[-0.02em] text-[#F5F3EF]">{card.value}</span>
+              {card.sub && <span className="font-mono text-[11px] text-white/40">{card.sub}</span>}
+            </div>
+            <div className="mt-3 flex items-center justify-between border-t border-white/[0.06] pt-2.5">
+              <span className="flex items-center gap-1.5 font-mono text-[11px] text-white/40">
+                {card.dot && <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />}
+                {card.footerIcon && <card.footerIcon className="h-3.5 w-3.5 text-emerald-400" />}
+                {card.footer}
+              </span>
+              {card.action && (
+                <button onClick={card.action} className="font-mono text-[11px] text-[#FFB224] hover:text-[#FFC96B] flex items-center gap-1">
+                  {card.actionLabel} <ArrowRight className="h-3 w-3" />
+                </button>
+              )}
             </div>
           </div>
-          <div className="mt-3 flex items-baseline space-x-2">
-            <span className="text-3xl font-bold text-white">{totalDevices}</span>
-            <span className="text-xs text-slate-400">active units</span>
-          </div>
-          <div className="mt-3 flex items-center justify-between border-t border-slate-800/80 pt-2.5 text-[11px] text-slate-400">
-            <span>{fullyManagedCount} Full</span>
-            <span>•</span>
-            <span>{workProfileCount} BYOD</span>
-            <span>•</span>
-            <span>{dedicatedCount} Kiosk</span>
-          </div>
-        </div>
-
-        {/* Compliance Rate Card */}
-        <div className="rounded-xl border border-slate-800 bg-slate-900/70 p-5 backdrop-blur shadow-sm hover:border-slate-700 transition-colors">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold uppercase tracking-wider text-slate-400">
-              Security Compliance
-            </span>
-            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-teal-500/10 text-teal-400 border border-teal-500/20">
-              <ShieldCheck className="h-4.5 w-4.5" />
-            </div>
-          </div>
-          <div className="mt-3 flex items-baseline space-x-2">
-            <span className="text-3xl font-bold text-emerald-400">{complianceRate}%</span>
-            <span className="text-xs text-slate-400">fleet compliant</span>
-          </div>
-          <div className="mt-3 flex items-center space-x-1.5 border-t border-slate-800/80 pt-2.5 text-[11px] text-slate-400">
-            <CheckCircle2 className="h-3.5 w-3.5 text-emerald-400" />
-            <span>{compliantDevices} of {totalDevices} devices adhering to AMAPI rules</span>
-          </div>
-        </div>
-
-        {/* CloudDPC Tokens Card */}
-        <div className="rounded-xl border border-slate-800 bg-slate-900/70 p-5 backdrop-blur shadow-sm hover:border-slate-700 transition-colors">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold uppercase tracking-wider text-slate-400">
-              Active CloudDPC QR Tokens
-            </span>
-            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-blue-500/10 text-blue-400 border border-blue-500/20">
-              <QrCode className="h-4.5 w-4.5" />
-            </div>
-          </div>
-          <div className="mt-3 flex items-baseline space-x-2">
-            <span className="text-3xl font-bold text-white">{activeTokens}</span>
-            <span className="text-xs text-slate-400">available tokens</span>
-          </div>
-          <div className="mt-3 flex items-center justify-between border-t border-slate-800/80 pt-2.5 text-[11px] text-slate-400">
-            <span>{policies.length} Active Policies</span>
-            <button
-              onClick={() => onNavigateTab("enrollment")}
-              className="text-emerald-400 hover:text-emerald-300 font-medium flex items-center"
-            >
-              Manage <ArrowRight className="ml-1 h-3 w-3" />
-            </button>
-          </div>
-        </div>
-
-        {/* Enterprise Mode & Cloud Gateway */}
-        <div className="rounded-xl border border-slate-800 bg-slate-900/70 p-5 backdrop-blur shadow-sm hover:border-slate-700 transition-colors">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold uppercase tracking-wider text-slate-400">
-              AMAPI Cloud Gateway
-            </span>
-            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">
-              <Zap className="h-4.5 w-4.5" />
-            </div>
-          </div>
-          <div className="mt-3 flex items-baseline space-x-2">
-            <span className="text-xl font-bold text-slate-200">
-              {enterprise?.mode === "LIVE_AMAPI" ? "Live GCP" : "Verified Sandbox"}
-            </span>
-          </div>
-          <div className="mt-3 flex items-center space-x-1.5 border-t border-slate-800/80 pt-2.5 text-[11px] text-emerald-400">
-            <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
-            <span>Pub/Sub Webhook Receiver Active</span>
-          </div>
-        </div>
+        ))}
       </div>
 
-      {/* Grid: Active Fleet Table & OS Breakdown */}
+      {/* Fleet + Distribution */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Left 2 Cols: Fleet Quick Status */}
-        <div className="lg:col-span-2 rounded-xl border border-slate-800 bg-slate-900/80 p-5">
+        <div className="lg:col-span-2 rounded-[16px] border border-white/[0.06] bg-[#101012]/80 backdrop-blur-[20px] p-5">
           <div className="flex items-center justify-between mb-4">
             <div>
-              <h2 className="text-base font-semibold text-white">Live Fleet Status</h2>
-              <p className="text-xs text-slate-400">Real-time telemetry and management mode summary</p>
+              <h2 className="font-display text-[18px] tracking-[-0.01em] text-[#F5F3EF]">Live Fleet Status</h2>
+              <p className="font-mono text-[11px] text-white/40 mt-1">Real-time telemetry and management mode summary</p>
             </div>
-            <button
-              onClick={() => onNavigateTab("devices")}
-              className="text-xs font-medium text-emerald-400 hover:text-emerald-300 flex items-center"
-            >
-              View Full Fleet <ArrowRight className="ml-1 h-3.5 w-3.5" />
+            <button onClick={() => onNavigateTab("devices")} className="rounded-full border border-white/[0.08] bg-white/[0.04] px-3 py-1.5 font-mono text-[11px] text-white/60 hover:bg-white/[0.08] hover:text-white transition flex items-center gap-1">
+              View Full Fleet <ArrowRight className="h-3.5 w-3.5" />
             </button>
           </div>
 
           <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs">
+            <table className="w-full text-left">
               <thead>
-                <tr className="border-b border-slate-800 text-slate-400">
-                  <th className="pb-2.5 font-medium">Device / Model</th>
-                  <th className="pb-2.5 font-medium">Mode</th>
-                  <th className="pb-2.5 font-medium">OS / Patch</th>
-                  <th className="pb-2.5 font-medium">Battery & Net</th>
-                  <th className="pb-2.5 font-medium">Status</th>
-                  <th className="pb-2.5 font-medium text-right">Action</th>
+                <tr className="border-b border-white/[0.06] text-white/30">
+                  <th className="pb-2.5 font-mono text-[10px] tracking-[0.08em] uppercase font-medium">Device / Model</th>
+                  <th className="pb-2.5 font-mono text-[10px] tracking-[0.08em] uppercase font-medium">Mode</th>
+                  <th className="pb-2.5 font-mono text-[10px] tracking-[0.08em] uppercase font-medium">OS / Patch</th>
+                  <th className="pb-2.5 font-mono text-[10px] tracking-[0.08em] uppercase font-medium">Battery & Net</th>
+                  <th className="pb-2.5 font-mono text-[10px] tracking-[0.08em] uppercase font-medium">Status</th>
+                  <th className="pb-2.5 font-mono text-[10px] tracking-[0.08em] uppercase font-medium text-right">Action</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-800/60">
+              <tbody className="divide-y divide-white/[0.04]">
                 {devices.slice(0, 5).map((device) => {
-                  const modeBadgeColor =
+                  const modeStyle =
                     device.managementMode === "FULLY_MANAGED"
-                      ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20"
+                      ? "bg-[#FFB224]/10 text-[#FFB224] border-[#FFB224]/20"
                       : device.managementMode === "DEDICATED"
                       ? "bg-amber-500/10 text-amber-400 border-amber-500/20"
-                      : "bg-blue-500/10 text-blue-400 border-blue-500/20";
+                      : "bg-[#8B5CF6]/10 text-[#8B5CF6] border-[#8B5CF6]/20";
 
                   return (
-                    <tr
-                      key={device.id}
-                      className="hover:bg-slate-800/40 transition-colors cursor-pointer group"
-                      onClick={() => onSelectDevice(device)}
-                    >
+                    <tr key={device.id} className="hover:bg-white/[0.03] transition-colors cursor-pointer group" onClick={() => onSelectDevice(device)}>
                       <td className="py-3 pr-2">
-                        <div className="font-medium text-slate-200 group-hover:text-emerald-300 transition-colors">
-                          {device.model}
-                        </div>
-                        <div className="text-[11px] text-slate-500">
-                          {device.manufacturer} • SN: {device.serialNumber}
-                        </div>
+                        <div className="text-[13px] font-medium text-[#F5F3EF] group-hover:text-[#FFB224] transition-colors">{device.model}</div>
+                        <div className="font-mono text-[11px] text-white/30">{device.manufacturer} • SN: {device.serialNumber}</div>
                       </td>
                       <td className="py-3 pr-2">
-                        <span className={`inline-flex rounded px-2 py-0.5 text-[10px] font-semibold border ${modeBadgeColor}`}>
+                        <span className={`inline-flex rounded-full px-2.5 py-0.5 text-[10px] font-mono tracking-[0.06em] uppercase font-semibold border ${modeStyle}`}>
                           {device.managementMode.replace("_", " ")}
                         </span>
                       </td>
                       <td className="py-3 pr-2">
-                        <div className="text-slate-300">{device.osVersion.split(" (")[0]}</div>
-                        <div className="text-[10px] text-slate-500">Patch: {device.securityPatchLevel}</div>
+                        <div className="text-[12px] text-white/70">{device.osVersion.split(" (")[0]}</div>
+                        <div className="font-mono text-[10px] text-white/30">Patch: {device.securityPatchLevel}</div>
                       </td>
                       <td className="py-3 pr-2">
-                        <div className="flex items-center space-x-1.5 text-slate-300">
-                          <BatteryCharging className="h-3.5 w-3.5 text-emerald-400" />
+                        <div className="flex items-center gap-1.5 text-[12px] text-white/60">
+                          <BatteryCharging className="h-3.5 w-3.5 text-[#FFB224]" />
                           <span>{device.batteryLevel}%</span>
                         </div>
-                        <div className="flex items-center space-x-1 text-[10px] text-slate-500">
+                        <div className="flex items-center gap-1 font-mono text-[10px] text-white/30">
                           <Wifi className="h-3 w-3" />
                           <span>{device.wifiSsid || device.networkType}</span>
                         </div>
                       </td>
                       <td className="py-3 pr-2">
                         {device.state === "LOST_MODE" ? (
-                          <span className="inline-flex items-center text-[11px] font-medium text-amber-400">
-                            <Lock className="mr-1 h-3 w-3" /> Lost Mode
+                          <span className="inline-flex items-center gap-1 text-[11px] font-medium text-amber-400">
+                            <Lock className="h-3 w-3" /> Lost Mode
                           </span>
                         ) : device.isCompliant ? (
-                          <span className="inline-flex items-center text-[11px] font-medium text-emerald-400">
-                            <CheckCircle2 className="mr-1 h-3 w-3" /> Compliant
+                          <span className="inline-flex items-center gap-1 text-[11px] font-medium text-emerald-400">
+                            <CheckCircle2 className="h-3 w-3" /> Compliant
                           </span>
                         ) : (
-                          <span className="inline-flex items-center text-[11px] font-medium text-rose-400">
-                            <AlertTriangle className="mr-1 h-3 w-3" /> Non-Compliant
+                          <span className="inline-flex items-center gap-1 text-[11px] font-medium text-rose-400">
+                            <AlertTriangle className="h-3 w-3" /> Non-Compliant
                           </span>
                         )}
                       </td>
                       <td className="py-3 text-right">
                         <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            onSelectDevice(device);
-                          }}
-                          className="rounded border border-slate-700 bg-slate-800 px-2 py-1 text-[11px] font-medium text-slate-300 hover:bg-slate-700 hover:text-white transition-colors"
+                          onClick={(e) => { e.stopPropagation(); onSelectDevice(device); }}
+                          className="rounded-full border border-white/[0.08] bg-white/[0.04] px-3 py-1 text-[11px] font-medium text-white/60 hover:bg-white/[0.08] hover:text-white transition"
                         >
                           Manage
                         </button>
@@ -295,99 +260,55 @@ export function FleetDashboard({
           </div>
         </div>
 
-        {/* Right Col: Fleet Architecture & Recent Events */}
         <div className="space-y-6">
-          {/* Management Mode Distribution */}
-          <div className="rounded-xl border border-slate-800 bg-slate-900/80 p-5">
-            <h3 className="text-sm font-semibold text-white mb-3 flex items-center space-x-2">
-              <Layers className="h-4 w-4 text-emerald-400" />
-              <span>Provisioning Mode Distribution</span>
+          <div className="rounded-[16px] border border-white/[0.06] bg-[#101012]/80 backdrop-blur-[20px] p-5">
+            <h3 className="flex items-center gap-2 font-display text-[15px] tracking-[-0.01em] text-[#F5F3EF] mb-4">
+              <Layers className="h-4 w-4 text-[#FFB224]" />
+              Provisioning Mode Distribution
             </h3>
-
-            <div className="space-y-3 text-xs">
-              <div>
-                <div className="flex justify-between text-slate-300 mb-1">
-                  <span>Company-Owned Fully Managed (DO)</span>
-                  <span className="font-semibold text-white">{fullyManagedCount}</span>
+            <div className="space-y-4">
+              {[
+                { label: "Company-Owned Fully Managed (DO)", count: fullyManagedCount, color: "bg-[#FFB224]" },
+                { label: "Dedicated Kiosk / Rugged Handheld", count: dedicatedCount, color: "bg-amber-500" },
+                { label: "BYOD Work Profile (PO)", count: workProfileCount, color: "bg-[#8B5CF6]" },
+              ].map((item) => (
+                <div key={item.label}>
+                  <div className="flex justify-between font-mono text-[11px] text-white/50 mb-1.5">
+                    <span>{item.label}</span>
+                    <span className="font-semibold text-white">{item.count}</span>
+                  </div>
+                  <div className="h-1.5 w-full rounded-full bg-white/[0.06] overflow-hidden">
+                    <div className={`h-full ${item.color} rounded-full transition-all`} style={{ width: `${totalDevices > 0 ? (item.count / totalDevices) * 100 : 0}%` }} />
+                  </div>
                 </div>
-                <div className="h-2 w-full rounded-full bg-slate-800 overflow-hidden">
-                  <div
-                    className="h-full bg-emerald-500 rounded-full"
-                    style={{
-                      width: `${totalDevices > 0 ? (fullyManagedCount / totalDevices) * 100 : 0}%`,
-                    }}
-                  />
-                </div>
-              </div>
-
-              <div>
-                <div className="flex justify-between text-slate-300 mb-1">
-                  <span>Dedicated Kiosk / Rugged Handheld</span>
-                  <span className="font-semibold text-white">{dedicatedCount}</span>
-                </div>
-                <div className="h-2 w-full rounded-full bg-slate-800 overflow-hidden">
-                  <div
-                    className="h-full bg-amber-500 rounded-full"
-                    style={{
-                      width: `${totalDevices > 0 ? (dedicatedCount / totalDevices) * 100 : 0}%`,
-                    }}
-                  />
-                </div>
-              </div>
-
-              <div>
-                <div className="flex justify-between text-slate-300 mb-1">
-                  <span>BYOD Work Profile (PO)</span>
-                  <span className="font-semibold text-white">{workProfileCount}</span>
-                </div>
-                <div className="h-2 w-full rounded-full bg-slate-800 overflow-hidden">
-                  <div
-                    className="h-full bg-blue-500 rounded-full"
-                    style={{
-                      width: `${totalDevices > 0 ? (workProfileCount / totalDevices) * 100 : 0}%`,
-                    }}
-                  />
-                </div>
-              </div>
+              ))}
             </div>
           </div>
 
-          {/* Recent Pub/Sub & Audit Events */}
-          <div className="rounded-xl border border-slate-800 bg-slate-900/80 p-5">
-            <div className="flex items-center justify-between mb-3">
-              <h3 className="text-sm font-semibold text-white flex items-center space-x-2">
-                <Clock className="h-4 w-4 text-emerald-400" />
-                <span>Live Telemetry & Audit Stream</span>
+          <div className="rounded-[16px] border border-white/[0.06] bg-[#101012]/80 backdrop-blur-[20px] p-5">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="flex items-center gap-2 font-display text-[15px] text-[#F5F3EF]">
+                <Clock className="h-4 w-4 text-[#FFB224]" />
+                Live Telemetry
               </h3>
-              <button
-                onClick={() => onNavigateTab("logs")}
-                className="text-[11px] text-emerald-400 hover:underline"
-              >
+              <button onClick={() => onNavigateTab("logs")} className="font-mono text-[11px] text-[#FFB224] hover:text-[#FFC96B]">
                 All Logs
               </button>
             </div>
-
             <div className="space-y-2.5">
               {logs.slice(0, 4).map((log) => (
-                <div
-                  key={log.id}
-                  className="rounded-lg border border-slate-800/80 bg-slate-950/40 p-2.5 text-xs flex items-start space-x-2.5"
-                >
-                  <div className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                <div key={log.id} className="rounded-[12px] border border-white/[0.06] bg-[#08080A] p-3 flex items-start gap-2.5">
+                  <div className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#FFB224]/10 text-[#FFB224] border border-[#FFB224]/20">
                     <CheckCircle2 className="h-3 w-3" />
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center justify-between">
-                      <span className="font-semibold text-slate-300 truncate">
-                        {log.action.replace(/_/g, " ")}
-                      </span>
-                      <span className="text-[10px] text-slate-500 shrink-0">
+                      <span className="font-mono text-[11px] font-medium text-white/70 truncate">{log.action.replace(/_/g, " ")}</span>
+                      <span className="font-mono text-[10px] text-white/30 shrink-0">
                         {new Date(log.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                       </span>
                     </div>
-                    <p className="text-[11px] text-slate-400 truncate mt-0.5">
-                      Actor: {log.actor} • Type: {log.resourceType}
-                    </p>
+                    <p className="font-mono text-[11px] text-white/30 truncate mt-0.5">Actor: {log.actor} • {log.resourceType}</p>
                   </div>
                 </div>
               ))}
