@@ -1,26 +1,57 @@
 @import "tailwindcss";
 
+@theme {
+  --color-base: #050507;
+  --color-surface: #0E0E11;
+  --color-paper: #FFFDFA;
+  --color-amber: #FFB224;
+  --color-violet: #8B5CF6;
+  --color-cyan: #06B6D4;
+  --font-display: "Instrument Serif", Georgia, serif;
+  --font-sans: "Inter", system-ui, sans-serif;
+  --font-mono: "Geist Mono", "JetBrains Mono", monospace;
+}
+
 @layer base {
   body {
-    @apply bg-slate-950 text-slate-100 antialiased selection:bg-emerald-500/30 selection:text-emerald-200;
+    @apply bg-[#050507] text-[#F5F3EF] antialiased selection:bg-amber-500/30 selection:text-amber-100;
     font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+    position: relative;
+  }
+  
+  body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    background:
+      radial-gradient(80% 80% at 15% 20%, rgba(255,178,36,0.08), transparent 50%),
+      radial-gradient(60% 60% at 85% 25%, rgba(139,92,246,0.06), transparent 50%);
+    filter: blur(40px);
+    pointer-events: none;
+    z-index: -1;
+  }
+
+  h1, h2, h3 {
+    font-family: var(--font-display);
+    letter-spacing: -0.02em;
+    font-weight: 400;
   }
 }
 
-/* Custom scrollbar */
+/* Custom scrollbar - amber */
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;
 }
 ::-webkit-scrollbar-track {
-  background: rgba(15, 23, 42, 0.6);
+  background: rgba(14, 14, 17, 0.8);
 }
 ::-webkit-scrollbar-thumb {
-  background: rgba(51, 65, 85, 0.8);
-  border-radius: 4px;
+  background: rgba(255, 178, 36, 0.2);
+  border-radius: 999px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(100, 116, 139, 1);
+  background: rgba(255, 178, 36, 0.35);
 }
 
 @keyframes pulse-subtle {
@@ -30,4 +61,21 @@
 
 .animate-pulse-subtle {
   animation: pulse-subtle 3s ease-in-out infinite;
+}
+
+@keyframes aurora {
+  0%, 100% { transform: translate(0, 0) rotate(0deg) scale(1); }
+  33% { transform: translate(20px, -20px) rotate(0.5deg) scale(1.02); }
+  66% { transform: translate(-15px, 15px) rotate(-0.5deg) scale(0.98); }
+}
+
+.animate-aurora {
+  animation: aurora 20s ease-in-out infinite;
+}
+
+/* Glass utilities */
+.glass {
+  background: rgba(14, 14, 17, 0.8);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.06);
 }
