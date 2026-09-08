@@ -16,11 +16,10 @@ import {
 
 export function TestSuiteViewer() {
   const [testResults, setTestResults] = useState<any | null>(null);
-  const [isRunning, setIsRunning] = useState(false);
+  const [isRunning, setIsRunning] = useState(true);
   const [expandedTests, setExpandedTests] = useState<Record<string, boolean>>({});
 
   const runSuite = async () => {
-    setIsRunning(true);
     try {
       const res = await fetch("/api/test-suite");
       const data = await res.json();
@@ -39,7 +38,11 @@ export function TestSuiteViewer() {
   };
 
   useEffect(() => {
-    runSuite();
+    // Run once after first paint (not synchronously inside the effect).
+    const id = setTimeout(() => {
+      void runSuite();
+    }, 0);
+    return () => clearTimeout(id);
   }, []);
 
   const toggleExpand = (id: string) => {
@@ -67,7 +70,7 @@ export function TestSuiteViewer() {
         </div>
 
         <button
-          onClick={runSuite}
+          onClick={() => { setIsRunning(true); void runSuite(); }}
           disabled={isRunning}
           className="flex items-center space-x-2 rounded-xl bg-emerald-600 px-5 py-2.5 text-xs sm:text-sm font-semibold text-white shadow-lg shadow-emerald-950/50 hover:bg-emerald-500 transition-all disabled:opacity-50"
         >

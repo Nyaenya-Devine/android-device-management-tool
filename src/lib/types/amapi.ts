@@ -1,5 +1,5 @@
 export type ManagementMode = "FULLY_MANAGED" | "WORK_PROFILE" | "DEDICATED";
-export type DeviceState = "ACTIVE" | "DISABLED" | "DELETED" | "PROVISIONING" | "LOST_MODE";
+export type DeviceState = "ACTIVE" | "DISABLED" | "DELETED" | "PROVISIONING" | "LOST_MODE" | "WIPE_PENDING";
 export type PersonalUsageAllowance = "PERSONAL_USAGE_ALLOWED" | "PERSONAL_USAGE_DISALLOWED";
 export type TokenStatus = "ACTIVE" | "CONSUMED" | "EXPIRED" | "REVOKED";
 export type CommandType =
@@ -7,7 +7,6 @@ export type CommandType =
   | "WIPE"
   | "REBOOT"
   | "RELINQUISH_OWNERSHIP"
-  | "DELETE"
   | "CLEAR_APP_DATA"
   | "START_LOST_MODE"
   | "STOP_LOST_MODE"

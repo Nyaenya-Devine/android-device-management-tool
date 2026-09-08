@@ -1,7 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/db";
-import { devices, policies, deviceCommands, auditLogs, pubsubMessages } from "@/db/schema";
+import { devices, policies, deviceCommands, auditLogs, pubsubMessages, enterprises } from "@/db/schema";
 import { eq, desc } from "drizzle-orm";
+import { fetchGoogleAccessToken, callAmapi } from "@/lib/amapi/amapi-service";
+import { decryptText } from "@/lib/crypto";
 
 export async function GET(
   _req: NextRequest,
@@ -126,23 +128,66 @@ export async function DELETE(
       return NextResponse.json({ error: "Device not found" }, { status: 404 });
     }
 
+    const [enterprise] = await db
+      .select()
+      .from(enterprises)
+      .where(eq(enterprises.id, device.enterpriseId))
+      .limit(1);
+
+    let liveError: string | null = null;
+    let googleDeviceName: string | null = device.googleDeviceName;
+
+    // LIVE mode: enterprises.devices.delete deprovisions AND factory-resets the
+    // real device (name = enterprises/{enterpriseId}/devices/{deviceId}).
+    // Only remove the local row once Google confirms the call.
+    if (
+      enterprise &&
+      enterprise.mode === "LIVE_AMAPI" &&
+      enterprise.serviceAccountEmail &&
+      enterprise.serviceAccountPrivateKey &&
+      device.googleDeviceName
+    ) {
+      try {
+        const privateKey = decryptText(enterprise.serviceAccountPrivateKey);
+        const accessToken = await fetchGoogleAccessToken(
+          enterprise.serviceAccountEmail,
+          privateKey
+        );
+        await callAmapi(device.googleDeviceName, {
+          method: "DELETE",
+          accessToken,
+        });
+      } catch (gErr: unknown) {
+        liveError = gErr instanceof Error ? gErr.message : "Live AMAPI delete failed";
+        console.error("AMAPI devices.delete failed:", liveError);
+      }
+    }
+
     await db.delete(devices).where(eq(devices.id, id));
 
     await db.insert(auditLogs).values({
       id: `log-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
       enterpriseId: device.enterpriseId,
       actor: "Console Admin",
-      action: "DEVICE_DELETED",
+      action: liveError ? "DEVICE_DELETE_LOCAL_ONLY" : "DEVICE_DELETED",
       resourceType: "DEVICE",
       resourceId: id,
       details: {
         model: device.model,
         serialNumber: device.serialNumber,
+        googleDeviceName,
+        liveError,
       },
-      status: "SUCCESS",
+      status: liveError ? "WARNING" : "SUCCESS",
     });
 
-    return NextResponse.json({ success: true, message: "Device deleted successfully" });
+    return NextResponse.json({
+      success: true,
+      message: liveError
+        ? `Device removed locally, but the live Google delete failed (${liveError}). The real device may still be enrolled.`
+        : "Device deprovisioned and removed successfully",
+      liveError,
+    });
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : "Failed to delete device";
     return NextResponse.json({ error: message }, { status: 500 });

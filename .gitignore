@@ -44,3 +44,4 @@ Screenshot *.png
 
 .next/
 node_modules/
+tsconfig.tsbuildinfo

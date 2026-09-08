@@ -7,6 +7,7 @@ on:
     branches: [ main ]
 
 jobs:
+  # Python simulation layer (inherited from the Reset Lab lineage)
   test:
     runs-on: ubuntu-latest
     steps:
@@ -31,3 +32,24 @@ jobs:
       - name: Verify log integrity
         run: |
           python security_logger.py verify
+
+  # Web app (Next.js live-management layer) — typecheck, lint, build
+  web:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - name: Install dependencies
+        run: npm ci --no-audit --no-fund
+      - name: Typecheck
+        run: npm run typecheck
+      - name: Lint
+        run: npm run lint
+      - name: Build
+        # DATABASE_URL only needs to be syntactically present at build time;
+        # no database is contacted during `next build`.
+        run: DATABASE_URL=postgresql://ci:ci@localhost:5432/ci npm run build

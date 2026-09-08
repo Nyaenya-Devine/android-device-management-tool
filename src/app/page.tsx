@@ -58,7 +58,11 @@ export default function AppHome() {
   }, []);
 
   useEffect(() => {
-    fetchData();
+    // Load once after first paint (not synchronously inside the effect).
+    const id = setTimeout(() => {
+      void fetchData(false);
+    }, 0);
+    return () => clearTimeout(id);
   }, [fetchData]);
 
   // Issue MDM command
