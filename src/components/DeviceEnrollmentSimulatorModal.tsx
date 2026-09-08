@@ -26,7 +26,7 @@ export function DeviceEnrollmentSimulatorModal({
   const [model, setModel] = useState("Google Pixel 9 Pro");
   const [manufacturer, setManufacturer] = useState("Google");
   const [serialNumber, setSerialNumber] = useState(
-    `SN${Date.now().toString().slice(-6)}${Math.random().toString(36).substring(2, 4).toUpperCase()}`
+    () => `SN${Date.now().toString().slice(-6)}${Math.random().toString(36).substring(2, 4).toUpperCase()}`
   );
   const [isEnrolling, setIsEnrolling] = useState(false);
   const [resultMessage, setResultMessage] = useState<string | null>(null);

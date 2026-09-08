@@ -23,9 +23,11 @@ export function DeviceRegistrationModal({
   const [model, setModel] = useState("Galaxy S24 Ultra");
   const [manufacturer, setManufacturer] = useState("Samsung");
   const [serialNumber, setSerialNumber] = useState(
-    `SN${Date.now().toString().slice(-6)}${Math.random().toString(36).substring(2, 4).toUpperCase()}`
+    () => `SN${Date.now().toString().slice(-6)}${Math.random().toString(36).substring(2, 4).toUpperCase()}`
   );
-  const [imei, setImei] = useState(`35${Math.floor(1000000000000 + Math.random() * 9000000000000)}`);
+  const [imei, setImei] = useState(
+    () => `35${Math.floor(1000000000000 + Math.random() * 9000000000000)}`
+  );
   const [managementMode, setManagementMode] = useState<ManagementMode>("FULLY_MANAGED");
   const [policyId, setPolicyId] = useState(policies[0]?.id || "");
   const [isSubmitting, setIsSubmitting] = useState(false);

@@ -34,12 +34,14 @@ export async function POST(
     const body = await req.json();
     const { commandType, payload = {}, actor = "IT Administrator" } = body;
 
+    // NOTE: maps 1:1 to Google's Android Management API CommandType enum.
+    // "DELETE" is intentionally absent: removing a device from an enterprise is
+    // enterprises.devices.delete — NOT an issueCommand type.
     const validCommands: CommandType[] = [
       "LOCK",
       "WIPE",
       "REBOOT",
       "RELINQUISH_OWNERSHIP",
-      "DELETE",
       "CLEAR_APP_DATA",
       "START_LOST_MODE",
       "STOP_LOST_MODE",
@@ -98,14 +100,19 @@ export async function POST(
       }
     }
 
-    // Execute state effects on device
+    // Execute state effects on device.
+    // Real AM API semantics: a WIPE (or RELINQUISH_OWNERSHIP) only happens once
+    // the DEVICE acknowledges the command and it can be cancelled before then.
+    // So the local row is marked WIPE_PENDING — never DELETED at issue time.
+    // The device is only removed from the enterprise later via
+    // enterprises.devices.delete (see DELETE /api/devices/[id]).
     const now = new Date();
     if (commandType === "START_LOST_MODE") {
       await db.update(devices).set({ state: "LOST_MODE", updatedAt: now }).where(eq(devices.id, device.id));
     } else if (commandType === "STOP_LOST_MODE") {
       await db.update(devices).set({ state: "ACTIVE", updatedAt: now }).where(eq(devices.id, device.id));
-    } else if (commandType === "WIPE") {
-      await db.update(devices).set({ state: "DELETED", updatedAt: now }).where(eq(devices.id, device.id));
+    } else if (commandType === "WIPE" || commandType === "RELINQUISH_OWNERSHIP") {
+      await db.update(devices).set({ state: "WIPE_PENDING", updatedAt: now }).where(eq(devices.id, device.id));
     } else if (commandType === "REBOOT" || commandType === "LOCK") {
       await db.update(devices).set({ lastSyncTime: now, updatedAt: now }).where(eq(devices.id, device.id));
     }
