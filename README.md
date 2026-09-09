@@ -3,7 +3,7 @@
 > **What it is:** an evolving, dual-mode Android Enterprise management console —
 > a **local simulator** for development and demos, plus a **live integration**
 > with Google's Android Management API (AM API) for real managed devices.
-> Its lineage is the [Android Reset Lab](https://github.com/Nyaenya-Devine/android-reset-lab)
+> Its lineage is the [Android Reset Lab](https://android-reset-lab.vercel.app) ([source](https://github.com/Nyaenya-Devine/android-reset-lab))
 > (a Python simulation of a reset system with RBAC, four-eyes dual-control and
 > tamper-evident audit) — this repo carries that safety-first thinking into a
 > realistic web application.
