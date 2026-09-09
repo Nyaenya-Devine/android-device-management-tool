@@ -8,6 +8,8 @@
 > tamper-evident audit) — this repo carries that safety-first thinking into a
 > realistic web application.
 
+> ▶ **Hosted console (simulator mode):** <https://android-device-management-tool.vercel.app> — the simulator works end-to-end; the live Google AM API path stays OFF unless its credentials are configured, so the public demo never touches real devices.
+>
 > **Status — read honestly:** this is an **experimental / work-in-progress**
 > learning project. The simulator mode works end-to-end with local data; the
 > live AM API path is implemented (service-account auth, policies, enrollment
