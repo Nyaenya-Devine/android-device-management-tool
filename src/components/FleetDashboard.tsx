@@ -16,6 +16,7 @@ import {
   ArrowRight,
   Sparkles,
 } from "lucide-react";
+import { FleetRiskHeatmap } from "./FleetRiskHeatmap";
 
 interface FleetDashboardProps {
   devices: any[];
@@ -261,6 +262,8 @@ export function FleetDashboard({
         </div>
 
         <div className="space-y-6">
+          <FleetRiskHeatmap devices={devices as any} onSelectDevice={onSelectDevice as any} />
+
           <div className="rounded-[16px] border border-white/[0.06] bg-[#101012]/80 backdrop-blur-[20px] p-5">
             <h3 className="flex items-center gap-2 font-display text-[15px] tracking-[-0.01em] text-[#F5F3EF] mb-4">
               <Layers className="h-4 w-4 text-[#FFB224]" />
