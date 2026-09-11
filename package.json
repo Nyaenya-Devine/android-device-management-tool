@@ -1,23 +1,28 @@
 {
-  "name": "nextjs-postgresql-template",
+  "name": "android-device-management-tool",
   "private": true,
+  "description": "Android Enterprise MDM console - security-hardened, dual-mode (simulator + live AMAPI)",
   "scripts": {
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
     "lint": "eslint .",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "audit": "npm audit --audit-level=high",
+    "security": "npm audit && pip-audit || true"
   },
   "dependencies": {
     "@types/qrcode": "^1.5.6",
     "dotenv": "17.3.1",
     "drizzle-orm": "0.45.2",
     "lucide-react": "^1.38.0",
-    "next": "16.2.6",
+    "next": "16.3.5",
     "pg": "8.20.0",
     "qrcode": "^1.5.4",
-    "react": "19.2.6",
-    "react-dom": "19.2.6"
+    "react": "19.2.8",
+    "react-dom": "19.2.8",
+    "server-only": "^0.0.1"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "4.1.17",
@@ -27,9 +32,16 @@
     "@types/react-dom": "19.2.3",
     "drizzle-kit": "0.31.10",
     "eslint": "9.39.4",
-    "eslint-config-next": "16.2.6",
-    "postcss": "8.5.8",
+    "eslint-config-next": "16.3.5",
+    "postcss": "8.5.28",
     "tailwindcss": "4.1.17",
-    "typescript": "5.9.3"
+    "typescript": "5.9.3",
+    "vitest": "^4.0.15"
+  },
+  "overrides": {
+    "esbuild": "^0.25.0"
+  },
+  "engines": {
+    "node": ">=18.18.0"
   }
 }
