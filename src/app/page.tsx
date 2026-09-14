@@ -14,7 +14,7 @@ import { TestSuiteViewer } from "@/components/TestSuiteViewer";
 import { DeviceEnrollmentSimulatorModal } from "@/components/DeviceEnrollmentSimulatorModal";
 import { DeviceRegistrationModal } from "@/components/DeviceRegistrationModal";
 import { RefreshCw } from "lucide-react";
-import DeviceCallCenter from "@/components/DeviceCallCenter";
+import VoiceDeviceCallCenter from "@/components/VoiceDeviceCallCenter";
 import StudentMode from "@/components/StudentMode";
 
 export default function AppHome() {
@@ -335,8 +335,8 @@ export default function AppHome() {
         />
       )}
 
-      {/* OrbitDesk-level immersive additions */}
-      <DeviceCallCenter devices={devices} onDeviceAction={(deviceId, action) => handleIssueCommand(deviceId, action)} />
+      {/* OrbitDesk-level immersive additions — Voice-to-Voice, Mouth-to-Ear, No Texting */}
+      <VoiceDeviceCallCenter devices={devices} onDeviceAction={(deviceId, action) => handleIssueCommand(deviceId, action)} />
       <StudentMode onNavigate={setActiveTab} />
 
       {/* Disclaimer — moved to bottom per user request */}
