@@ -7,6 +7,8 @@
   --color-amber: #FFB224;
   --color-violet: #8B5CF6;
   --color-cyan: #06B6D4;
+  --color-android: #3DDC84;
+  --color-android-dark: #2AA86B;
   --font-display: "Instrument Serif", Georgia, serif;
   --font-sans: "Inter", system-ui, sans-serif;
   --font-mono: "Geist Mono", "JetBrains Mono", monospace;
@@ -14,21 +16,50 @@
 
 @layer base {
   body {
-    @apply bg-[#050507] text-[#F5F3EF] antialiased selection:bg-amber-500/30 selection:text-amber-100;
+    @apply bg-[#050507] text-[#F5F3EF] antialiased selection:bg-[#3DDC84]/30 selection:text-[#3DDC84];
     font-feature-settings: "cv02", "cv03", "cv04", "cv11";
     position: relative;
+    overflow-x: hidden;
   }
   
+  /* Android Livery Background — Good Nasty Work, Specific to Android Enterprise */
   body::before {
     content: "";
     position: fixed;
     inset: 0;
     background:
-      radial-gradient(80% 80% at 15% 20%, rgba(255,178,36,0.08), transparent 50%),
-      radial-gradient(60% 60% at 85% 25%, rgba(139,92,246,0.06), transparent 50%);
+      radial-gradient(80% 80% at 15% 20%, rgba(61,220,132,0.12), transparent 50%),
+      radial-gradient(60% 60% at 85% 25%, rgba(139,92,246,0.08), transparent 50%),
+      radial-gradient(50% 50% at 50% 85%, rgba(0,120,212,0.06), transparent 50%),
+      radial-gradient(40% 40% at 50% 50%, rgba(61,220,132,0.03), transparent 70%);
     filter: blur(40px);
     pointer-events: none;
+    z-index: -2;
+  }
+
+  body::after {
+    content: "";
+    position: fixed;
+    inset: 0;
+    background-image: 
+      repeating-linear-gradient(
+        -45deg,
+        transparent,
+        transparent 24px,
+        rgba(61,220,132,0.04) 24px,
+        rgba(61,220,132,0.04) 25px,
+        transparent 25px,
+        transparent 48px,
+        rgba(0,120,212,0.03) 48px,
+        rgba(0,120,212,0.03) 49px
+      ),
+      linear-gradient(to right, rgba(255,255,255,0.02) 1px, transparent 1px),
+      linear-gradient(to bottom, rgba(255,255,255,0.02) 1px, transparent 1px);
+    background-size: 100% 100%, 64px 64px, 64px 64px;
+    opacity: 0.4;
+    pointer-events: none;
     z-index: -1;
+    mask-image: radial-gradient(ellipse 90% 70% at 50% 0%, black 20%, transparent 80%);
   }
 
   h1, h2, h3 {
@@ -38,7 +69,7 @@
   }
 }
 
-/* Custom scrollbar - amber */
+/* Custom scrollbar - Android green */
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;
@@ -47,11 +78,11 @@
   background: rgba(14, 14, 17, 0.8);
 }
 ::-webkit-scrollbar-thumb {
-  background: rgba(255, 178, 36, 0.2);
+  background: rgba(61, 220, 132, 0.25);
   border-radius: 999px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 178, 36, 0.35);
+  background: rgba(61, 220, 132, 0.4);
 }
 
 @keyframes pulse-subtle {
@@ -73,9 +104,32 @@
   animation: aurora 20s ease-in-out infinite;
 }
 
-/* Glass utilities */
+@keyframes android-float {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  50% { transform: translateY(-10px) rotate(1deg); }
+}
+
+.animate-android {
+  animation: android-float 8s ease-in-out infinite;
+}
+
+/* Glass utilities — Android livery */
 .glass {
-  background: rgba(14, 14, 17, 0.8);
+  background: rgba(14, 14, 17, 0.85);
   backdrop-filter: blur(20px);
-  border: 1px solid rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(61, 220, 132, 0.10);
+  box-shadow: 0 0 0 1px rgba(61,220,132,0.05), 0 20px 60px -20px rgba(0,0,0,0.7);
+}
+
+.glass:hover {
+  border-color: rgba(61, 220, 132, 0.20);
+  box-shadow: 0 0 0 1px rgba(61,220,132,0.10), 0 20px 60px -20px rgba(61,220,132,0.15);
+}
+
+/* Android Enterprise — QR + Device */
+.qr-pattern {
+  background-image: 
+    radial-gradient(circle at 25% 25%, rgba(61,220,132,0.15) 2px, transparent 2px),
+    radial-gradient(circle at 75% 75%, rgba(61,220,132,0.10) 1px, transparent 1px);
+  background-size: 24px 24px, 12px 12px;
 }
