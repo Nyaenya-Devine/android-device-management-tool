@@ -14,6 +14,8 @@ import { TestSuiteViewer } from "@/components/TestSuiteViewer";
 import { DeviceEnrollmentSimulatorModal } from "@/components/DeviceEnrollmentSimulatorModal";
 import { DeviceRegistrationModal } from "@/components/DeviceRegistrationModal";
 import { RefreshCw } from "lucide-react";
+import DeviceCallCenter from "@/components/DeviceCallCenter";
+import StudentMode from "@/components/StudentMode";
 
 export default function AppHome() {
   const [activeTab, setActiveTab] = useState<NavTab>("dashboard");
@@ -197,17 +199,21 @@ export default function AppHome() {
     return (
       <div className="flex min-h-screen items-center justify-center bg-[#050507] text-[#F5F3EF] relative overflow-hidden">
         <div className="pointer-events-none absolute inset-0">
-          <div className="absolute top-[20%] left-[20%] w-[600px] h-[400px] rounded-full blur-[80px] opacity-[0.08] bg-[#FFB224]" />
-          <div className="absolute bottom-[20%] right-[20%] w-[500px] h-[400px] rounded-full blur-[80px] opacity-[0.06] bg-[#8B5CF6]" />
+          <div className="absolute top-[20%] left-[20%] w-[600px] h-[400px] rounded-full blur-[80px] opacity-[0.12] bg-[#3DDC84]" />
+          <div className="absolute bottom-[20%] right-[20%] w-[500px] h-[400px] rounded-full blur-[80px] opacity-[0.08] bg-[#8B5CF6]" />
+          <div className="absolute top-[50%] left-[50%] w-[400px] h-[400px] rounded-full blur-[80px] opacity-[0.06] bg-[#0078D4]" />
         </div>
         <div className="flex flex-col items-center space-y-4 relative z-10">
-          <div className="h-12 w-12 rounded-full bg-[#FFFDFA] flex items-center justify-center relative">
-            <div className="absolute inset-0 rounded-full blur-[10px] opacity-30 bg-gradient-to-br from-[#FFB224] to-[#8B5CF6]" />
-            <RefreshCw className="h-6 w-6 animate-spin text-[#050507] relative z-10" />
+          <div className="h-14 w-14 rounded-[16px] bg-[#101012] border border-[#3DDC84]/20 flex items-center justify-center relative shadow-lg shadow-[#3DDC84]/10">
+            <div className="absolute inset-0 rounded-[16px] blur-[12px] opacity-30 bg-gradient-to-br from-[#3DDC84] to-[#8B5CF6]" />
+            <RefreshCw className="h-7 w-7 animate-spin text-[#3DDC84] relative z-10" />
           </div>
-          <p className="font-mono text-[11px] tracking-[0.14em] uppercase text-white/50">
-            Initializing Android Enterprise AMAPI DPC Console...
-          </p>
+          <div className="text-center space-y-1">
+            <p className="font-mono text-[11px] tracking-[0.14em] uppercase text-white/60">
+              Initializing Android Enterprise • AMAPI • CloudDPC
+            </p>
+            <p className="font-mono text-[10px] text-white/30">OrbitDesk-level • Real devices • Flowing calls • Thread humor</p>
+          </div>
         </div>
       </div>
     );
@@ -229,7 +235,7 @@ export default function AppHome() {
       />
 
       {/* Main Content Area */}
-      <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6">
+      <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 relative z-10">
         {activeTab === "dashboard" && (
           <FleetDashboard
             devices={devices}
@@ -240,6 +246,7 @@ export default function AppHome() {
             onNavigateTab={setActiveTab}
             onSelectDevice={setSelectedDevice}
             onOpenQuickToken={() => setActiveTab("enrollment")}
+            onDeviceAction={(deviceId, action) => handleIssueCommand(deviceId, action)}
           />
         )}
 
@@ -327,6 +334,20 @@ export default function AppHome() {
           onRegister={handleRegisterDevice}
         />
       )}
+
+      {/* OrbitDesk-level immersive additions */}
+      <DeviceCallCenter devices={devices} onDeviceAction={(deviceId, action) => handleIssueCommand(deviceId, action)} />
+      <StudentMode onNavigate={setActiveTab} />
+
+      {/* Disclaimer — moved to bottom per user request */}
+      <footer className="mx-auto max-w-7xl px-4 sm:px-6 pb-8 pt-4">
+        <div className="rounded-[12px] border border-white/[0.06] bg-[#0a0a0a]/60 backdrop-blur p-3 flex gap-2.5">
+          <span className="text-[11px]">⚠️</span>
+          <p className="text-[10px] leading-[1.5] text-white/30 font-mono">
+            <span className="text-white/50 font-semibold">Lab Disclaimer:</span> Android Enterprise simulation for learning. Uses mock AMAPI, SafetyNet, Play Integrity. Not connected to real GCP. For portfolio demo only — no real devices wiped. Policies like SEC-2024-07 are fictional but inspired by real enterprise. Thread humor from r/Intune • r/AndroidEnterprise.
+          </p>
+        </div>
+      </footer>
     </div>
   );
 }
