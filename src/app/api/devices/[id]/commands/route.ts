@@ -5,32 +5,30 @@ import { eq, desc } from "drizzle-orm";
 import { fetchGoogleAccessToken, callAmapi } from "@/lib/amapi/amapi-service";
 import { decryptText } from "@/lib/crypto";
 import { CommandType } from "@/lib/types/amapi";
+import {
+  authenticateApiRequest,
+  authenticateApprover,
+  canIssueCommand,
+  requiresDualControl,
+} from "@/lib/api-auth";
 
 const VALID_COMMANDS: readonly CommandType[] = [
   "LOCK", "WIPE", "REBOOT", "RELINQUISH_OWNERSHIP", "CLEAR_APP_DATA",
   "START_LOST_MODE", "STOP_LOST_MODE", "RESET_PASSWORD",
 ];
 
-function actorFromRequest(req: NextRequest): string | null {
-  const actor = req.headers.get("x-mdm-actor")?.trim();
-  if (!actor || actor.length > 100) return null;
-  return actor;
-}
-
-function requireWriteAuth(req: NextRequest): string | null {
-  // Deployment/auth gateway must authenticate the caller and inject this trusted
-  // identity. Never accept actor identity from the JSON body.
-  return actorFromRequest(req);
-}
-
 function safeError(err: unknown, fallback: string): string {
   return err instanceof Error ? err.message : fallback;
 }
 
 export async function GET(
-  _req: NextRequest,
+  req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  if (!authenticateApiRequest(req)) {
+    return NextResponse.json({ error: "Authentication required" }, { status: 401 });
+  }
+
   try {
     const { id } = await params;
     const commands = await db.select().from(deviceCommands)
@@ -45,8 +43,10 @@ export async function POST(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const actor = requireWriteAuth(req);
-  if (!actor) return NextResponse.json({ error: "Authentication required" }, { status: 401 });
+  const identity = authenticateApiRequest(req);
+  if (!identity) {
+    return NextResponse.json({ error: "Authentication required" }, { status: 401 });
+  }
 
   try {
     const { id } = await params;
@@ -57,6 +57,24 @@ export async function POST(
 
     if (!VALID_COMMANDS.includes(commandType)) {
       return NextResponse.json({ error: "Invalid command type" }, { status: 400 });
+    }
+
+    if (!canIssueCommand(identity.role, commandType)) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
+
+    let approver: ReturnType<typeof authenticateApprover> = null;
+    if (requiresDualControl(commandType)) {
+      approver = authenticateApprover(req);
+      if (!approver) {
+        return NextResponse.json({ error: "Second-person approval required" }, { status: 403 });
+      }
+      if (approver.actor === identity.actor) {
+        return NextResponse.json({ error: "Requester and approver must be different actors" }, { status: 403 });
+      }
+      if (approver.role !== "admin") {
+        return NextResponse.json({ error: "Approver is not authorized" }, { status: 403 });
+      }
     }
 
     const [device] = await db.select().from(devices).where(eq(devices.id, id)).limit(1);
@@ -82,8 +100,7 @@ export async function POST(
         if (amapiRes?.name) googleOpName = amapiRes.name;
         status = "SENT";
       } catch (gErr: unknown) {
-        // Do not silently simulate a destructive live command after AMAPI failure.
-        if (commandType === "WIPE" || commandType === "RELINQUISH_OWNERSHIP" || commandType === "RESET_PASSWORD") {
+        if (requiresDualControl(commandType)) {
           return NextResponse.json({ error: "Live command could not be delivered; no local destructive action was applied" }, { status: 502 });
         }
         errorMessage = safeError(gErr, "Live AMAPI call failed");
@@ -106,14 +123,20 @@ export async function POST(
       const [createdCommand] = await db.insert(deviceCommands).values({
         id: commandId, enterpriseId: enterprise.id, deviceId: device.id, commandType,
         payload, status, googleOperationName: googleOpName, errorMessage,
-        issuedBy: actor, issuedAt: now, executedAt: status === "EXECUTED" ? now : null,
+        issuedBy: identity.actor, issuedAt: now, executedAt: status === "EXECUTED" ? now : null,
       }).returning();
 
       await db.insert(auditLogs).values({
-        id: `log-${crypto.randomUUID()}`, enterpriseId: enterprise.id, actor,
+        id: `log-${crypto.randomUUID()}`, enterpriseId: enterprise.id, actor: identity.actor,
         action: `COMMAND_ISSUED_${commandType}`, resourceType: "DEVICE_COMMAND",
         resourceId: createdCommand.id,
-        details: { deviceId: device.id, deviceModel: device.model, commandType }, status: "SUCCESS",
+        details: {
+          deviceId: device.id,
+          deviceModel: device.model,
+          commandType,
+          approver: approver?.actor ?? null,
+          dualControl: Boolean(approver),
+        }, status: "SUCCESS",
       });
 
       await db.insert(pubsubMessages).values({
@@ -128,7 +151,7 @@ export async function POST(
     }
 
     await db.insert(auditLogs).values({
-      id: `log-${crypto.randomUUID()}`, enterpriseId: enterprise.id, actor,
+      id: `log-${crypto.randomUUID()}`, enterpriseId: enterprise.id, actor: identity.actor,
       action: `COMMAND_FAILED_${commandType}`, resourceType: "DEVICE_COMMAND", resourceId: commandId,
       details: { deviceId: device.id, commandType }, status: "FAILURE",
     });
