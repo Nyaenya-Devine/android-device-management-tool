@@ -89,8 +89,17 @@ export async function POST(
     let status: "PENDING" | "SENT" | "EXECUTED" | "FAILED" = "EXECUTED";
     let errorMessage: string | null = null;
 
-    if (enterprise.mode === "LIVE_AMAPI" && enterprise.serviceAccountEmail &&
-        enterprise.serviceAccountPrivateKey && device.googleDeviceName) {
+    if (enterprise.mode === "LIVE_AMAPI") {
+      // Live mode must never silently fall back to local simulation.
+      if (!enterprise.serviceAccountEmail || !enterprise.serviceAccountPrivateKey || !device.googleDeviceName) {
+        await db.insert(auditLogs).values({
+          id: `log-${crypto.randomUUID()}`, enterpriseId: enterprise.id, actor: identity.actor,
+          action: `COMMAND_BLOCKED_${commandType}`, resourceType: "DEVICE_COMMAND", resourceId: commandId,
+          details: { deviceId: device.id, commandType, reason: "live configuration incomplete" }, status: "FAILURE",
+        });
+        return NextResponse.json({ error: "Live command blocked: device or enterprise AMAPI configuration is incomplete" }, { status: 503 });
+      }
+
       try {
         const privateKey = decryptText(enterprise.serviceAccountPrivateKey);
         const accessToken = await fetchGoogleAccessToken(enterprise.serviceAccountEmail, privateKey);
@@ -100,9 +109,6 @@ export async function POST(
         if (amapiRes?.name) googleOpName = amapiRes.name;
         status = "SENT";
       } catch (gErr: unknown) {
-        if (requiresDualControl(commandType)) {
-          return NextResponse.json({ error: "Live command could not be delivered; no local destructive action was applied" }, { status: 502 });
-        }
         errorMessage = safeError(gErr, "Live AMAPI call failed");
         status = "FAILED";
       }
@@ -155,7 +161,7 @@ export async function POST(
       action: `COMMAND_FAILED_${commandType}`, resourceType: "DEVICE_COMMAND", resourceId: commandId,
       details: { deviceId: device.id, commandType }, status: "FAILURE",
     });
-    return NextResponse.json({ success: false, error: errorMessage || "Command failed" }, { status: 502 });
+    return NextResponse.json({ success: false, error: "Command failed" }, { status: 502 });
   } catch {
     return NextResponse.json({ error: "Failed to issue command" }, { status: 500 });
   }
