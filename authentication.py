@@ -1,4 +1,4 @@
-# authentication.py - salted hashing, login, lockout
+# authentication.py - salted hashing, login, lockout, secure sessions
 import hashlib
 import hmac
 import json
@@ -9,9 +9,9 @@ from datetime import datetime, timedelta, timezone
 import config
 
 USERS_FILE = "data/users.json"
-ITERATIONS = 100_000
-# Allowed roles - prevents arbitrary role injection
+ITERATIONS = 600_000
 ALLOWED_ROLES = {"viewer", "operator", "admin", "security_analyst"}
+SESSION_TOKEN_BYTES = 32
 
 
 def _load_users():
@@ -27,110 +27,66 @@ def _save_users(users):
         json.dump(users, f, indent=2)
 
 
-def _hash_password(password, salt_hex):
-    return hashlib.pbkdf2_hmac(
-        "sha256", password.encode(), bytes.fromhex(salt_hex), ITERATIONS
-    ).hex()
+def _hash_password(password, salt_hex, iterations=ITERATIONS):
+    return hashlib.pbkdf2_hmac("sha256", password.encode(), bytes.fromhex(salt_hex), iterations).hex()
 
 
 def create_user(username, password, role="viewer"):
-    if role not in ALLOWED_ROLES:
-        return False
-    # Basic password strength: at least 8 chars (simulation-only check)
-    if len(password) < config.PASSWORD_MIN_LENGTH:
+    if role not in ALLOWED_ROLES or len(password) < config.PASSWORD_MIN_LENGTH:
         return False
     users = _load_users()
     if username in users:
         return False
     salt_hex = secrets.token_hex(16)
-    users[username] = {
-        "salt": salt_hex,
-        "hash": _hash_password(password, salt_hex),
-        "role": role,
-        "failed": 0,
-        "locked_until": None,  # P1: time-based lockout
-        "last_failed_at": None,
-    }
+    users[username] = {"salt": salt_hex, "hash": _hash_password(password, salt_hex), "iterations": ITERATIONS,
+                       "role": role, "failed": 0, "locked_until": None, "last_failed_at": None}
     _save_users(users)
     return True
 
 
 def verify_password(username, password):
-    users = _load_users()
-    if username not in users:
+    record = _load_users().get(username)
+    if not record:
+        _hash_password(password, "00" * 16)
         return False
-    record = users[username]
-    expected = record["hash"]
-    actual = _hash_password(password, record["salt"])
-    # Constant-time compare to prevent timing attacks
-    return hmac.compare_digest(expected, actual)
+    actual = _hash_password(password, record["salt"], int(record.get("iterations", ITERATIONS)))
+    return hmac.compare_digest(record["hash"], actual)
 
 
 def login(username, password):
-    """Returns (ok, message). Locks the account after repeated failures with time-based auto-unlock.
-    Uses generic messages to prevent user enumeration.
-    """
     users = _load_users()
-    if username not in users:
-        # Generic message - don't reveal if user exists
-        return False, "invalid credentials"
-    record = users[username]
-    
-    # P1: Handle time-based lockout with auto-unlock
-    # Ensure backward compat: add missing fields if old user record
-    if "locked_until" not in record:
-        record["locked_until"] = None
-    if "failed" not in record:
-        record["failed"] = 0
-    
+    record = users.get(username)
     now = datetime.now(timezone.utc)
-    
-    # Check if currently locked
+    if record is None:
+        _hash_password(password, "00" * 16)
+        return False, "invalid credentials"
+
     locked_until_str = record.get("locked_until")
     if locked_until_str:
         try:
             locked_until = datetime.fromisoformat(locked_until_str)
             if now < locked_until:
-                # Still locked
-                remaining = int((locked_until - now).total_seconds() / 60) + 1
-                return False, f"account locked (try again in {remaining}m)"
-            else:
-                # Lockout expired - auto-unlock
-                record["failed"] = 0
-                record["locked_until"] = None
+                return False, "invalid credentials"
+            record["failed"] = 0
+            record["locked_until"] = None
         except (ValueError, TypeError):
-            # Corrupted locked_until, reset
             record["locked_until"] = None
             record["failed"] = 0
-    
-    if record["failed"] >= config.MAX_FAILED_LOGINS:
-        # Should have been caught by locked_until check, but handle legacy case
-        # Set lockout now
-        lockout_until = now + timedelta(minutes=config.LOCKOUT_DURATION_MINUTES)
-        record["locked_until"] = lockout_until.isoformat()
-        _save_users(users)
-        return False, f"account locked (try again in {config.LOCKOUT_DURATION_MINUTES}m)"
-    
+
     expected = record["hash"]
-    actual = _hash_password(password, record["salt"])
+    actual = _hash_password(password, record["salt"], int(record.get("iterations", ITERATIONS)))
     if hmac.compare_digest(expected, actual):
         record["failed"] = 0
         record["locked_until"] = None
         record["last_failed_at"] = None
         _save_users(users)
         return True, "welcome"
-    
-    # Failed attempt
-    record["failed"] += 1
+
+    record["failed"] = int(record.get("failed", 0)) + 1
     record["last_failed_at"] = now.isoformat()
     if record["failed"] >= config.MAX_FAILED_LOGINS:
-        lockout_until = now + timedelta(minutes=config.LOCKOUT_DURATION_MINUTES)
-        record["locked_until"] = lockout_until.isoformat()
-        _save_users(users)
-        return False, f"account locked (try again in {config.LOCKOUT_DURATION_MINUTES}m)"
-    
+        record["locked_until"] = (now + timedelta(minutes=config.LOCKOUT_DURATION_MINUTES)).isoformat()
     _save_users(users)
-    # Generic message - don't reveal tries left to prevent enumeration
     return False, "invalid credentials"
 
 
@@ -162,32 +118,33 @@ def _save_sessions(sessions):
 
 
 def start_session(username):
-    """Issue a session token; the password is no longer needed."""
+    users = _load_users()
+    if username not in users:
+        raise ValueError("unknown user")
     sessions = _load_sessions()
-    token = secrets.token_hex(16)
-    sessions[token] = {
-        "username": username,
-        "role": _load_users()[username]["role"],
-        "created_at": datetime.now(timezone.utc).isoformat(),
-    }
+    token = secrets.token_urlsafe(SESSION_TOKEN_BYTES)
+    now = datetime.now(timezone.utc)
+    sessions[token] = {"username": username, "role": users[username]["role"], "created_at": now.isoformat(),
+                       "expires_at": (now + timedelta(minutes=config.SESSION_TTL_MINUTES)).isoformat()}
     _save_sessions(sessions)
     return token
 
 
-
 def check_session(token):
-    """Who does this token belong to? None if invalid or expired."""
+    if not isinstance(token, str) or not token or len(token) > 512:
+        return None
     sessions = _load_sessions()
     session = sessions.get(token)
     if session is None:
         return None
-    created = session.get("created_at")
-    if created is None:
+    try:
+        expires = datetime.fromisoformat(session["expires_at"])
+    except (KeyError, TypeError, ValueError):
+        sessions.pop(token, None)
+        _save_sessions(sessions)
         return None
-    age = (datetime.now(timezone.utc) -
-           datetime.fromisoformat(created)).total_seconds() / 60
-    if age > config.SESSION_TTL_MINUTES:
-        del sessions[token]
+    if datetime.now(timezone.utc) >= expires:
+        sessions.pop(token, None)
         _save_sessions(sessions)
         return None
     return session
@@ -204,5 +161,3 @@ def end_session(token):
 
 if __name__ == "__main__":
     print("Authentication module loaded successfully.")
-    print("Use the application or test suite to exercise authentication.")
-    
