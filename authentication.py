@@ -30,34 +30,23 @@ def _secure_json_save(path, value):
     directory = os.path.dirname(path) or "."
     os.makedirs(directory, exist_ok=True)
     temp_path = f"{path}.{secrets.token_hex(8)}.tmp"
+    with open(temp_path, "w", encoding="utf-8") as f:
+        json.dump(value, f, indent=2)
+        f.flush()
+        os.fsync(f.fileno())
     try:
-        with open(temp_path, "w", encoding="utf-8") as f:
-            json.dump(value, f, indent=2)
-            f.flush()
-            os.fsync(f.fileno())
-        try:
-            os.chmod(temp_path, 0o600)
-        except OSError:
-            pass
-        os.replace(temp_path, path)
-        try:
-            os.chmod(path, 0o600)
-        except OSError:
-            pass
-    finally:
-        try:
-            if os.path.exists(temp_path):
-                os.remove(temp_path)
-        except OSError:
-            pass
+        os.chmod(temp_path, 0o600)
+    except OSError:
+        pass
+    os.replace(temp_path, path)
+    try:
+        os.chmod(path, 0o600)
+    except OSError:
+        pass
 
 
-def _load_users():
-    return _secure_json_load(USERS_FILE)
-
-
-def _save_users(users):
-    _secure_json_save(USERS_FILE, users)
+def _load_users(): return _secure_json_load(USERS_FILE)
+def _save_users(users): _secure_json_save(USERS_FILE, users)
 
 
 def _hash_password(password, salt_hex, iterations=ITERATIONS):
@@ -85,8 +74,7 @@ def verify_password(username, password):
     try:
         actual = _hash_password(password, record["salt"], int(record.get("iterations", ITERATIONS)))
         return hmac.compare_digest(record["hash"], actual)
-    except (KeyError, TypeError, ValueError):
-        return False
+    except (KeyError, TypeError, ValueError): return False
 
 
 def login(username, password):
@@ -107,8 +95,7 @@ def login(username, password):
     try:
         expected = record["hash"]
         actual = _hash_password(password, record["salt"], int(record.get("iterations", ITERATIONS)))
-    except (KeyError, TypeError, ValueError):
-        return False, "invalid credentials"
+    except (KeyError, TypeError, ValueError): return False, "invalid credentials"
     if hmac.compare_digest(expected, actual):
         record["failed"] = 0; record["locked_until"] = None; record["last_failed_at"] = None
         _save_users(users); return True, "welcome"
@@ -127,16 +114,9 @@ def unlock(username):
     return False
 
 
-def _load_sessions():
-    return _secure_json_load(SESSIONS_FILE)
-
-
-def _save_sessions(sessions):
-    _secure_json_save(SESSIONS_FILE, sessions)
-
-
-def _session_key(token):
-    return hashlib.sha256(token.encode("utf-8")).hexdigest()
+def _load_sessions(): return _secure_json_load(SESSIONS_FILE)
+def _save_sessions(sessions): _secure_json_save(SESSIONS_FILE, sessions)
+def _session_key(token): return hashlib.sha256(token.encode("utf-8")).hexdigest()
 
 
 def start_session(username):
@@ -164,8 +144,7 @@ def check_session(token):
     if datetime.now(timezone.utc) >= expires:
         sessions.pop(key, None); _save_sessions(sessions); return None
     user = _load_users().get(session.get("username"))
-    if not user or user.get("role") not in ALLOWED_ROLES:
-        sessions.pop(key, None); _save_sessions(sessions); return None
+    if not user or user.get("role") not in ALLOWED_ROLES: return None
     return {**session, "role": user["role"]}
 
 
