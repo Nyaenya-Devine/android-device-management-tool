@@ -5,168 +5,109 @@ import { ensureEnterpriseInitialized } from "@/lib/db-seed";
 import { eq, sql } from "drizzle-orm";
 import { fetchGoogleAccessToken, callAmapi } from "@/lib/amapi/amapi-service";
 import { encryptText, decryptText } from "@/lib/crypto";
+import { authenticateApiRequest } from "@/lib/api-auth";
 
-export async function GET() {
+const MAX_BODY = 32_000;
+
+export async function GET(req: NextRequest) {
+  if (!authenticateApiRequest(req)) return NextResponse.json({ error: "Authentication required" }, { status: 401 });
   try {
     await ensureEnterpriseInitialized();
     const entList = await db.select().from(enterprises).limit(1);
-    if (!entList.length) {
-      return NextResponse.json({ error: "Enterprise not initialized" }, { status: 404 });
-    }
-
+    if (!entList.length) return NextResponse.json({ error: "Enterprise not initialized" }, { status: 404 });
     const ent = entList[0];
-
-    // Fleet summary statistics
     const [deviceCount] = await db.select({ count: sql<number>`count(*)` }).from(devices).where(eq(devices.enterpriseId, ent.id));
     const [policyCount] = await db.select({ count: sql<number>`count(*)` }).from(policies).where(eq(policies.enterpriseId, ent.id));
     const [tokenCount] = await db.select({ count: sql<number>`count(*)` }).from(enrollmentTokens).where(eq(enrollmentTokens.enterpriseId, ent.id));
     const [compliantCount] = await db.select({ count: sql<number>`count(*)` }).from(devices).where(sql`${devices.enterpriseId} = ${ent.id} AND ${devices.isCompliant} = true`);
-
-    const hasPrivateKey = !!ent.serviceAccountPrivateKey;
-
     return NextResponse.json({
       enterprise: {
-        id: ent.id,
-        enterpriseId: ent.enterpriseId,
-        name: ent.name,
-        mode: ent.mode,
-        gcpProjectId: ent.gcpProjectId,
-        serviceAccountEmail: ent.serviceAccountEmail,
-        hasPrivateKey,
-        pubsubTopic: ent.pubsubTopic,
-        pubsubSubscription: ent.pubsubSubscription,
-        status: ent.status,
-        createdAt: ent.createdAt,
-        updatedAt: ent.updatedAt,
+        id: ent.id, enterpriseId: ent.enterpriseId, name: ent.name, mode: ent.mode,
+        gcpProjectId: ent.gcpProjectId, serviceAccountEmail: ent.serviceAccountEmail,
+        hasPrivateKey: !!ent.serviceAccountPrivateKey, pubsubTopic: ent.pubsubTopic,
+        pubsubSubscription: ent.pubsubSubscription, status: ent.status, createdAt: ent.createdAt, updatedAt: ent.updatedAt,
       },
-      stats: {
-        totalDevices: Number(deviceCount?.count || 0),
-        compliantDevices: Number(compliantCount?.count || 0),
-        totalPolicies: Number(policyCount?.count || 0),
-        totalTokens: Number(tokenCount?.count || 0),
-      },
-    });
-  } catch (err: unknown) {
-    const message = err instanceof Error ? err.message : "Internal Server Error";
-    return NextResponse.json({ error: message }, { status: 500 });
+      stats: { totalDevices: Number(deviceCount?.count || 0), compliantDevices: Number(compliantCount?.count || 0), totalPolicies: Number(policyCount?.count || 0), totalTokens: Number(tokenCount?.count || 0) },
+    }, { headers: { "Cache-Control": "no-store" } });
+  } catch {
+    return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
   }
 }
 
 export async function PATCH(req: NextRequest) {
+  const identity = authenticateApiRequest(req);
+  if (!identity) return NextResponse.json({ error: "Authentication required" }, { status: 401 });
+  if (identity.role !== "admin") return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   try {
-    const body = await req.json();
+    const rawBody = await req.text();
+    if (Buffer.byteLength(rawBody, "utf8") > MAX_BODY) return NextResponse.json({ error: "Request payload too large" }, { status: 413 });
+    let body: Record<string, unknown>;
+    try { const parsed = JSON.parse(rawBody); if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) throw new Error(); body = parsed as Record<string, unknown>; }
+    catch { return NextResponse.json({ error: "Invalid JSON" }, { status: 400 }); }
+
     const entList = await db.select().from(enterprises).limit(1);
-    if (!entList.length) {
-      return NextResponse.json({ error: "Enterprise not found" }, { status: 404 });
-    }
-
+    if (!entList.length) return NextResponse.json({ error: "Enterprise not found" }, { status: 404 });
     const ent = entList[0];
-    const updateData: Partial<typeof enterprises.$inferInsert> = {
-      updatedAt: new Date(),
-    };
+    const allowed = ["name", "enterpriseId", "mode", "gcpProjectId", "serviceAccountEmail", "serviceAccountPrivateKey", "pubsubTopic", "pubsubSubscription"];
+    if (Object.keys(body).some(k => !allowed.includes(k))) return NextResponse.json({ error: "Unsupported update field" }, { status: 400 });
+    const updateData: Partial<typeof enterprises.$inferInsert> = { updatedAt: new Date() };
 
-    if (body.name) updateData.name = body.name.trim();
-    if (body.enterpriseId) updateData.enterpriseId = body.enterpriseId.trim();
-    if (body.mode && ["LIVE_AMAPI", "SANDBOX"].includes(body.mode)) {
-      updateData.mode = body.mode;
-    }
-    if (body.gcpProjectId !== undefined) updateData.gcpProjectId = body.gcpProjectId?.trim() || null;
-    if (body.serviceAccountEmail !== undefined) updateData.serviceAccountEmail = body.serviceAccountEmail?.trim() || null;
-    if (body.serviceAccountPrivateKey) {
-      updateData.serviceAccountPrivateKey = encryptText(body.serviceAccountPrivateKey.trim());
-    }
-    if (body.pubsubTopic !== undefined) updateData.pubsubTopic = body.pubsubTopic?.trim() || null;
-    if (body.pubsubSubscription !== undefined) updateData.pubsubSubscription = body.pubsubSubscription?.trim() || null;
+    if (body.name !== undefined) { if (typeof body.name !== "string" || !body.name.trim() || body.name.length > 160) return NextResponse.json({ error: "Invalid enterprise name" }, { status: 400 }); updateData.name = body.name.trim(); }
+    if (body.enterpriseId !== undefined) { if (typeof body.enterpriseId !== "string" || !/^enterprises\/[A-Za-z0-9_-]+$/.test(body.enterpriseId.trim())) return NextResponse.json({ error: "Invalid enterprise ID" }, { status: 400 }); updateData.enterpriseId = body.enterpriseId.trim(); }
+    if (body.mode !== undefined) { if (body.mode !== "LIVE_AMAPI" && body.mode !== "SANDBOX") return NextResponse.json({ error: "Invalid enterprise mode" }, { status: 400 }); updateData.mode = body.mode; }
+    if (body.gcpProjectId !== undefined) { if (body.gcpProjectId !== null && (typeof body.gcpProjectId !== "string" || body.gcpProjectId.length > 200)) return NextResponse.json({ error: "Invalid GCP project ID" }, { status: 400 }); updateData.gcpProjectId = typeof body.gcpProjectId === "string" ? body.gcpProjectId.trim() || null : null; }
+    if (body.serviceAccountEmail !== undefined) { if (body.serviceAccountEmail !== null && (typeof body.serviceAccountEmail !== "string" || body.serviceAccountEmail.length > 320 || !body.serviceAccountEmail.includes("@"))) return NextResponse.json({ error: "Invalid service account email" }, { status: 400 }); updateData.serviceAccountEmail = typeof body.serviceAccountEmail === "string" ? body.serviceAccountEmail.trim() || null : null; }
+    if (body.serviceAccountPrivateKey !== undefined) { if (typeof body.serviceAccountPrivateKey !== "string" || body.serviceAccountPrivateKey.length < 32 || body.serviceAccountPrivateKey.length > 16_000) return NextResponse.json({ error: "Invalid private key" }, { status: 400 }); updateData.serviceAccountPrivateKey = encryptText(body.serviceAccountPrivateKey.trim()); }
+    if (body.pubsubTopic !== undefined) { if (body.pubsubTopic !== null && (typeof body.pubsubTopic !== "string" || body.pubsubTopic.length > 500)) return NextResponse.json({ error: "Invalid Pub/Sub topic" }, { status: 400 }); updateData.pubsubTopic = typeof body.pubsubTopic === "string" ? body.pubsubTopic.trim() || null : null; }
+    if (body.pubsubSubscription !== undefined) { if (body.pubsubSubscription !== null && (typeof body.pubsubSubscription !== "string" || body.pubsubSubscription.length > 500)) return NextResponse.json({ error: "Invalid Pub/Sub subscription" }, { status: 400 }); updateData.pubsubSubscription = typeof body.pubsubSubscription === "string" ? body.pubsubSubscription.trim() || null : null; }
 
-    const [updated] = await db
-      .update(enterprises)
-      .set(updateData)
-      .where(eq(enterprises.id, ent.id))
-      .returning();
-
-    return NextResponse.json({
-      success: true,
-      enterprise: {
-        id: updated.id,
-        enterpriseId: updated.enterpriseId,
-        name: updated.name,
-        mode: updated.mode,
-        gcpProjectId: updated.gcpProjectId,
-        serviceAccountEmail: updated.serviceAccountEmail,
-        hasPrivateKey: !!updated.serviceAccountPrivateKey,
-        pubsubTopic: updated.pubsubTopic,
-        pubsubSubscription: updated.pubsubSubscription,
-        status: updated.status,
-      },
-    });
-  } catch (err: unknown) {
-    const message = err instanceof Error ? err.message : "Failed to update enterprise";
-    return NextResponse.json({ error: message }, { status: 500 });
+    const [updated] = await db.update(enterprises).set(updateData).where(eq(enterprises.id, ent.id)).returning();
+    return NextResponse.json({ success: true, enterprise: {
+      id: updated.id, enterpriseId: updated.enterpriseId, name: updated.name, mode: updated.mode,
+      gcpProjectId: updated.gcpProjectId, serviceAccountEmail: updated.serviceAccountEmail,
+      hasPrivateKey: !!updated.serviceAccountPrivateKey, pubsubTopic: updated.pubsubTopic,
+      pubsubSubscription: updated.pubsubSubscription, status: updated.status,
+    } }, { headers: { "Cache-Control": "no-store" } });
+  } catch {
+    return NextResponse.json({ error: "Failed to update enterprise" }, { status: 500 });
   }
 }
 
-/**
- * POST /api/enterprise -> Test Google AMAPI OAuth2 & Enterprise connectivity
- */
 export async function POST(req: NextRequest) {
+  const identity = authenticateApiRequest(req);
+  if (!identity) return NextResponse.json({ error: "Authentication required" }, { status: 401 });
+  if (identity.role !== "admin") return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   try {
-    const body = await req.json();
-    const { serviceAccountEmail, serviceAccountPrivateKey, enterpriseId } = body;
+    const rawBody = await req.text();
+    if (Buffer.byteLength(rawBody, "utf8") > MAX_BODY) return NextResponse.json({ error: "Request payload too large" }, { status: 413 });
+    let body: Record<string, unknown> = {};
+    try { const parsed = rawBody.trim() ? JSON.parse(rawBody) : {}; if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) throw new Error(); body = parsed as Record<string, unknown>; }
+    catch { return NextResponse.json({ error: "Invalid JSON" }, { status: 400 }); }
 
-    let email = serviceAccountEmail;
-    let key = serviceAccountPrivateKey;
+    const suppliedEmail = typeof body.serviceAccountEmail === "string" ? body.serviceAccountEmail.trim() : null;
+    const suppliedKey = typeof body.serviceAccountPrivateKey === "string" ? body.serviceAccountPrivateKey.trim() : null;
+    if ((suppliedEmail && suppliedEmail.length > 320) || (suppliedKey && (suppliedKey.length < 32 || suppliedKey.length > 16_000))) return NextResponse.json({ error: "Invalid credentials" }, { status: 400 });
 
-    // If not provided in body, load from DB
-    if (!email || !key) {
-      const entList = await db.select().from(enterprises).limit(1);
-      if (entList.length && entList[0].serviceAccountEmail && entList[0].serviceAccountPrivateKey) {
-        email = entList[0].serviceAccountEmail;
-        key = decryptText(entList[0].serviceAccountPrivateKey);
-      }
-    }
+    const entList = await db.select().from(enterprises).limit(1);
+    const stored = entList[0];
+    const email = suppliedEmail || stored?.serviceAccountEmail || null;
+    const key = suppliedKey || (stored?.serviceAccountPrivateKey ? decryptText(stored.serviceAccountPrivateKey) : null);
+    if (!email || !key) return NextResponse.json({ success: false, error: "Service Account Email and Private Key are required." }, { status: 400 });
 
-    if (!email || !key) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: "Service Account Email and Private Key are required to test Google Cloud AMAPI connection.",
-        },
-        { status: 400 }
-      );
-    }
-
-    // Step 1: Attempt OAuth2 Bearer token exchange
     const accessToken = await fetchGoogleAccessToken(email, key);
-    if (!accessToken) {
-      throw new Error("Received empty access token from Google OAuth2.");
-    }
+    if (!accessToken) throw new Error("Google OAuth2 returned no access token");
+    const targetEnterpriseId = typeof body.enterpriseId === "string" && /^enterprises\/[A-Za-z0-9_-]+$/.test(body.enterpriseId.trim())
+      ? body.enterpriseId.trim() : stored?.enterpriseId;
+    if (!targetEnterpriseId) return NextResponse.json({ success: false, error: "A valid enterprise ID is required." }, { status: 400 });
 
-    // Step 2: Attempt AMAPI verification query
-    let amapiDetails: unknown = null;
-    const targetEnterpriseId = enterpriseId || "enterprises/LC03";
     try {
-      amapiDetails = await callAmapi(`${targetEnterpriseId}`, {
-        method: "GET",
-        accessToken,
-      });
-    } catch (apiErr) {
-      // If enterprise not yet provisioned on Google Cloud, token exchange itself was successful
-      return NextResponse.json({
-        success: true,
-        oauthSuccess: true,
-        amapiMessage: `Google OAuth2 authentication succeeded! Token generated. (Target enterprise info: ${apiErr instanceof Error ? apiErr.message : "Not found"})`,
-        tokenPrefix: `${accessToken.substring(0, 10)}...`,
-      });
+      const amapiDetails = await callAmapi(targetEnterpriseId, { method: "GET", accessToken });
+      return NextResponse.json({ success: true, oauthSuccess: true, amapiMessage: "Successfully authenticated with Google Cloud AMAPI and verified Enterprise binding.", enterpriseDetails: amapiDetails }, { headers: { "Cache-Control": "no-store" } });
+    } catch {
+      // Do not expose the OAuth access token or credential-derived material.
+      return NextResponse.json({ success: true, oauthSuccess: true, amapiMessage: "Google OAuth2 authentication succeeded, but the requested enterprise could not be verified." }, { headers: { "Cache-Control": "no-store" } });
     }
-
-    return NextResponse.json({
-      success: true,
-      oauthSuccess: true,
-      amapiMessage: "Successfully authenticated with Google Cloud AMAPI and verified Enterprise binding!",
-      enterpriseDetails: amapiDetails,
-    });
-  } catch (err: unknown) {
-    const message = err instanceof Error ? err.message : "Connection test failed";
-    return NextResponse.json({ success: false, error: message }, { status: 400 });
+  } catch {
+    return NextResponse.json({ success: false, error: "Connection test failed" }, { status: 400 });
   }
 }
