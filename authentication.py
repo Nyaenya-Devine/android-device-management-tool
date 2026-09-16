@@ -9,19 +9,55 @@ from datetime import datetime, timedelta, timezone
 import config
 
 USERS_FILE = "data/users.json"
+SESSIONS_FILE = "data/sessions.json"
 ITERATIONS = 600_000
 ALLOWED_ROLES = {"viewer", "operator", "admin", "security_analyst"}
 SESSION_TOKEN_BYTES = 32
 
 
+def _secure_json_load(path):
+    if not os.path.exists(path):
+        return {}
+    try:
+        with open(path, "r", encoding="utf-8") as f:
+            value = json.load(f)
+        return value if isinstance(value, dict) else {}
+    except (OSError, json.JSONDecodeError, UnicodeDecodeError):
+        return {}
+
+
+def _secure_json_save(path, value):
+    directory = os.path.dirname(path) or "."
+    os.makedirs(directory, exist_ok=True)
+    temp_path = f"{path}.{secrets.token_hex(8)}.tmp"
+    try:
+        with open(temp_path, "w", encoding="utf-8") as f:
+            json.dump(value, f, indent=2)
+            f.flush()
+            os.fsync(f.fileno())
+        try:
+            os.chmod(temp_path, 0o600)
+        except OSError:
+            pass
+        os.replace(temp_path, path)
+        try:
+            os.chmod(path, 0o600)
+        except OSError:
+            pass
+    finally:
+        try:
+            if os.path.exists(temp_path):
+                os.remove(temp_path)
+        except OSError:
+            pass
+
+
 def _load_users():
-    if not os.path.exists(USERS_FILE): return {}
-    with open(USERS_FILE, "r", encoding="utf-8") as f: return json.load(f)
+    return _secure_json_load(USERS_FILE)
 
 
 def _save_users(users):
-    os.makedirs("data", exist_ok=True)
-    with open(USERS_FILE, "w", encoding="utf-8") as f: json.dump(users, f, indent=2)
+    _secure_json_save(USERS_FILE, users)
 
 
 def _hash_password(password, salt_hex, iterations=ITERATIONS):
@@ -91,17 +127,12 @@ def unlock(username):
     return False
 
 
-SESSIONS_FILE = "data/sessions.json"
-
-
 def _load_sessions():
-    if not os.path.exists(SESSIONS_FILE): return {}
-    with open(SESSIONS_FILE, "r", encoding="utf-8") as f: return json.load(f)
+    return _secure_json_load(SESSIONS_FILE)
 
 
 def _save_sessions(sessions):
-    os.makedirs("data", exist_ok=True)
-    with open(SESSIONS_FILE, "w", encoding="utf-8") as f: json.dump(sessions, f, indent=2)
+    _secure_json_save(SESSIONS_FILE, sessions)
 
 
 def _session_key(token):
@@ -110,7 +141,8 @@ def _session_key(token):
 
 def start_session(username):
     users = _load_users()
-    if username not in users: raise ValueError("unknown user")
+    user = users.get(username)
+    if not user or user.get("role") not in ALLOWED_ROLES: raise ValueError("unknown user")
     sessions = _load_sessions()
     token = secrets.token_urlsafe(SESSION_TOKEN_BYTES)
     now = datetime.now(timezone.utc)
