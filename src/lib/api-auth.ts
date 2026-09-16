@@ -3,10 +3,9 @@ import { timingSafeEqual } from "node:crypto";
 
 export type ApiRole = "viewer" | "operator" | "admin" | "security_analyst";
 
-export type ApiIdentity = {
-  actor: string;
-  role: ApiRole;
-};
+export type ApiIdentity = { actor: string; role: ApiRole };
+
+const VALID_ROLES = new Set<ApiRole>(["viewer", "operator", "admin", "security_analyst"]);
 
 function safeEqual(a: string, b: string): boolean {
   const left = Buffer.from(a);
@@ -26,8 +25,9 @@ function configuredIdentity(prefix: "MDM_API" | "MDM_APPROVER"): ApiIdentity | n
   const actor = process.env[`${prefix}_ACTOR`];
   const role = process.env[`${prefix}_ROLE`] as ApiRole | undefined;
   if (!token || !actor || !role) return null;
-  if (!/^[a-z_]+$/.test(role)) return null;
-  if (actor.length > 100 || token.length > 512) return null;
+  if (token.length < 32 || token.length > 512) return null;
+  if (actor.length < 1 || actor.length > 100 || !/^[A-Za-z0-9._-]+$/.test(actor)) return null;
+  if (!VALID_ROLES.has(role)) return null;
   return { actor, role };
 }
 
@@ -47,9 +47,7 @@ export function authenticateApprover(req: NextRequest): ApiIdentity | null {
 
 export function canIssueCommand(role: ApiRole, commandType: string): boolean {
   if (role === "admin") return true;
-  if (role === "operator") {
-    return !["WIPE", "RELINQUISH_OWNERSHIP", "RESET_PASSWORD"].includes(commandType);
-  }
+  if (role === "operator") return !["WIPE", "RELINQUISH_OWNERSHIP", "RESET_PASSWORD"].includes(commandType);
   return false;
 }
 
