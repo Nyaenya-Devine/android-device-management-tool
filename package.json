@@ -19,7 +19,7 @@
     "framer-motion": "^13.3.0",
     "lucide-react": "^1.38.0",
     "next": "16.3.5",
-    "pg": "8.20.0",
+    "pg": "8.23.0",
     "qrcode": "^1.5.4",
     "react": "19.2.8",
     "react-dom": "19.2.8",
@@ -28,7 +28,7 @@
   "devDependencies": {
     "@tailwindcss/postcss": "4.1.17",
     "@types/node": "22.19.15",
-    "@types/pg": "8.18.0",
+    "@types/pg": "8.23.1",
     "@types/react": "19.2.14",
     "@types/react-dom": "19.2.3",
     "drizzle-kit": "0.31.10",
