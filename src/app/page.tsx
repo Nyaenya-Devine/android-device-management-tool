@@ -212,7 +212,7 @@ export default function AppHome() {
             <p className="font-mono text-[11px] tracking-[0.14em] uppercase text-white/60">
               Initializing Android Enterprise • AMAPI • CloudDPC
             </p>
-            <p className="font-mono text-[10px] text-white/30">OrbitDesk-level • Real devices • Flowing calls • Thread humor</p>
+            <p className="font-mono text-[10px] text-white/30">Secure device management • Policy enforcement • Audit logging</p>
           </div>
         </div>
       </div>
@@ -335,7 +335,7 @@ export default function AppHome() {
         />
       )}
 
-      {/* OrbitDesk-level immersive additions — Voice-to-Voice, Mouth-to-Ear, No Texting */}
+
       <VoiceDeviceCallCenter devices={devices} onDeviceAction={(deviceId, action) => handleIssueCommand(deviceId, action)} />
       <StudentMode onNavigate={setActiveTab} />
 
@@ -344,7 +344,7 @@ export default function AppHome() {
         <div className="rounded-[12px] border border-white/[0.06] bg-[#0a0a0a]/60 backdrop-blur p-3 flex gap-2.5">
           <span className="text-[11px]">⚠️</span>
           <p className="text-[10px] leading-[1.5] text-white/30 font-mono">
-            <span className="text-white/50 font-semibold">Lab Disclaimer:</span> Android Enterprise simulation for learning. Uses mock AMAPI, SafetyNet, Play Integrity. Not connected to real GCP. For portfolio demo only — no real devices wiped. Policies like SEC-2024-07 are fictional but inspired by real enterprise. Thread humor from r/Intune • r/AndroidEnterprise.
+            <span className="text-white/50 font-semibold">Disclaimer:</span> Android Enterprise simulation for learning. Uses mock AMAPI, SafetyNet, Play Integrity. Not connected to real GCP. For portfolio demo only — no real devices wiped. Policies like SEC-2024-07 are fictional but inspired by real enterprise..
           </p>
         </div>
       </footer>

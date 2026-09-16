@@ -91,7 +91,7 @@ export function FleetRiskHeatmap({ devices, onSelectDevice }: { devices: Device[
         <div>
           <h3 className="font-display text-[16px] tracking-[-0.01em] text-[#F5F3EF] flex items-center gap-2">
             <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-red-500/10 border border-red-500/20 text-red-400 text-xs">⚠</span>
-            Fleet Risk Heatmap (God Mode)
+            Fleet Risk Heatmap
           </h3>
           <p className="font-mono text-[11px] text-white/40 mt-1">Real-time compliance & threat scoring per device</p>
         </div>
@@ -159,7 +159,7 @@ export function FleetRiskHeatmap({ devices, onSelectDevice }: { devices: Device[
       </div>
 
       <div className="mt-4 rounded-xl bg-[#FFB224]/5 border border-[#FFB224]/10 p-3">
-        <div className="text-[11px] font-mono text-[#FFB224] font-medium">Inventive Feature - God Mode</div>
+        <div className="text-[11px] font-mono text-[#FFB224] font-medium">Security Feature</div>
         <div className="text-[11px] text-white/50 mt-1">
           Risk scoring: compliance (40pts), lost mode (30), stale telemetry (&gt;24h = 15), outdated patch (25), low battery (10). 
           Proves security engineering mindset beyond basic CRUD.

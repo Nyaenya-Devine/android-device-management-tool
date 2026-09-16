@@ -61,7 +61,7 @@ export function FleetDashboard({
 
   return (
     <div className="space-y-5 relative z-10">
-      {/* Hero — Android Livery Bento, OrbitDesk level */}
+
       <div className="relative overflow-hidden rounded-[20px] border border-white/[0.06] bg-[#101012]/80 backdrop-blur-[24px] p-6 shadow-[0_24px_80px_rgba(0,0,0,0.6)]">
         <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-[#3DDC84]/30 to-transparent" />
         <div className="absolute top-[-35%] right-[-15%] w-[520px] h-[380px] rounded-full blur-[70px] opacity-[0.12] bg-[#3DDC84]" />
@@ -119,7 +119,7 @@ export function FleetDashboard({
         </div>
       </div>
 
-      {/* Bento KPI — Clean organized, OrbitDesk level */}
+
       <div className="grid grid-cols-12 gap-4">
         {/* Main KPIs — 3 cols */}
         <div className="col-span-12 lg:col-span-9 grid grid-cols-1 sm:grid-cols-3 gap-4">
@@ -262,7 +262,7 @@ export function FleetDashboard({
           </div>
         </div>
 
-        {/* Live Device View + Thread Humor stacked — 5 cols */}
+
         <div className="col-span-12 lg:col-span-5 space-y-4">
           {selectedLiveDevice ? (
             <DeviceRemoteView device={selectedLiveDevice} onCommand={(cmd) => onDeviceAction?.(selectedLiveDevice.id, cmd)} />
@@ -325,9 +325,9 @@ export function FleetDashboard({
             <p className="text-[12px] font-semibold text-[#F5F3EF]">What to expect — Real Workplace Experience (Influx-level clarity)</p>
             <ul className="text-[11px] text-white/50 leading-[1.5] list-disc pl-4 space-y-1">
               <li><span className="text-white/70">Each device different policy</span> — like real enterprise: Sales needs Outlook, Field needs kiosk, Facilities needs compliance audit trail per SEC-2024-07</li>
-              <li><span className="text-white/70">100% real feel actions</span> — LOCK needs internet, WIPE is factory reset (cat photos gone if DO), REBOOT keeps data. Visual proof via live device view + dumpsys logs</li>
+              <li><span className="text-white/70">Device operations</span> — LOCK needs internet, WIPE is factory reset (cat photos gone if DO), REBOOT keeps data. Visual proof via live device view + dumpsys logs</li>
               <li><span className="text-white/70">Call center flowing</span> — Client says "Hello?" first → YOU greet first → intro → problem → troubleshooting back-and-forth with real actions → resolution. Voice + mic support</li>
-              <li><span className="text-white/70">Thread humor trending</span> — r/Intune, r/AndroidEnterprise, #SafetyNetFails, #QRHell, #WorksOnMyPixel — nasty good humor from real MDM horror</li>
+              <li><span className="text-white/70">Community insights</span> — r/Intune, r/AndroidEnterprise, #SafetyNetFails, #QRHell, #WorksOnMyPixel — nasty good humor from real MDM horror</li>
             </ul>
           </div>
         </div>
