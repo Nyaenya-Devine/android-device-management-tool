@@ -16,6 +16,8 @@ const VALID_COMMANDS: readonly CommandType[] = [
   "LOCK", "WIPE", "REBOOT", "RELINQUISH_OWNERSHIP", "CLEAR_APP_DATA",
   "START_LOST_MODE", "STOP_LOST_MODE", "RESET_PASSWORD",
 ];
+const MAX_PAYLOAD_BYTES = 16_384;
+const MAX_DEVICE_ID_LENGTH = 200;
 
 function safeError(err: unknown, fallback: string): string {
   return err instanceof Error ? err.message : fallback;
@@ -26,14 +28,17 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   if (!authenticateApiRequest(req)) {
-    return NextResponse.json({ error: "Authentication required" }, { status: 401 });
+    return NextResponse.json({ error: "Authentication required" }, { status: 401, headers: { "Cache-Control": "no-store" } });
   }
 
   try {
     const { id } = await params;
+    if (!id || id.length > MAX_DEVICE_ID_LENGTH) {
+      return NextResponse.json({ error: "Invalid device ID" }, { status: 400 });
+    }
     const commands = await db.select().from(deviceCommands)
       .where(eq(deviceCommands.deviceId, id)).orderBy(desc(deviceCommands.issuedAt));
-    return NextResponse.json({ commands });
+    return NextResponse.json({ commands }, { headers: { "Cache-Control": "no-store" } });
   } catch {
     return NextResponse.json({ error: "Failed to fetch commands" }, { status: 500 });
   }
@@ -45,18 +50,49 @@ export async function POST(
 ) {
   const identity = authenticateApiRequest(req);
   if (!identity) {
-    return NextResponse.json({ error: "Authentication required" }, { status: 401 });
+    return NextResponse.json({ error: "Authentication required" }, { status: 401, headers: { "Cache-Control": "no-store" } });
   }
 
   try {
     const { id } = await params;
-    const body = await req.json();
-    const commandType = body?.commandType as CommandType;
-    const payload = body?.payload && typeof body.payload === "object" && !Array.isArray(body.payload)
-      ? body.payload : {};
+    if (!id || id.length > MAX_DEVICE_ID_LENGTH) {
+      return NextResponse.json({ error: "Invalid device ID" }, { status: 400 });
+    }
 
-    if (!VALID_COMMANDS.includes(commandType)) {
+    const rawBody = await req.text();
+    if (Buffer.byteLength(rawBody, "utf8") > MAX_PAYLOAD_BYTES) {
+      return NextResponse.json({ error: "Request payload too large" }, { status: 413 });
+    }
+
+    let body: unknown;
+    try {
+      body = JSON.parse(rawBody);
+    } catch {
+      return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
+    }
+    if (!body || typeof body !== "object" || Array.isArray(body)) {
+      return NextResponse.json({ error: "Invalid request body" }, { status: 400 });
+    }
+
+    const commandType = (body as { commandType?: unknown }).commandType;
+    if (typeof commandType !== "string" || !VALID_COMMANDS.includes(commandType as CommandType)) {
       return NextResponse.json({ error: "Invalid command type" }, { status: 400 });
+    }
+
+    const rawPayload = (body as { payload?: unknown }).payload;
+    const payload = rawPayload === undefined
+      ? {}
+      : rawPayload && typeof rawPayload === "object" && !Array.isArray(rawPayload)
+        ? rawPayload as Record<string, unknown>
+        : null;
+    if (payload === null) {
+      return NextResponse.json({ error: "Invalid command payload" }, { status: 400 });
+    }
+
+    // The command type is security-sensitive and must never be overridden by payload fields.
+    const { type: _ignoredType, ...commandPayload } = payload;
+    if (JSON.stringify(commandPayload).length > MAX_PAYLOAD_BYTES) {
+      return NextResponse.json({ error: "Command payload too large" }, { status: 413 });
     }
 
     if (!canIssueCommand(identity.role, commandType)) {
@@ -90,7 +126,6 @@ export async function POST(
     let errorMessage: string | null = null;
 
     if (enterprise.mode === "LIVE_AMAPI") {
-      // Live mode must never silently fall back to local simulation.
       if (!enterprise.serviceAccountEmail || !enterprise.serviceAccountPrivateKey || !device.googleDeviceName) {
         await db.insert(auditLogs).values({
           id: `log-${crypto.randomUUID()}`, enterpriseId: enterprise.id, actor: identity.actor,
@@ -104,7 +139,7 @@ export async function POST(
         const privateKey = decryptText(enterprise.serviceAccountPrivateKey);
         const accessToken = await fetchGoogleAccessToken(enterprise.serviceAccountEmail, privateKey);
         const amapiRes = await callAmapi<{ name?: string }>(`${device.googleDeviceName}:issueCommand`, {
-          method: "POST", accessToken, body: { type: commandType, ...payload },
+          method: "POST", accessToken, body: { type: commandType, ...commandPayload },
         });
         if (amapiRes?.name) googleOpName = amapiRes.name;
         status = "SENT";
@@ -128,7 +163,7 @@ export async function POST(
 
       const [createdCommand] = await db.insert(deviceCommands).values({
         id: commandId, enterpriseId: enterprise.id, deviceId: device.id, commandType,
-        payload, status, googleOperationName: googleOpName, errorMessage,
+        payload: commandPayload, status, googleOperationName: googleOpName, errorMessage,
         issuedBy: identity.actor, issuedAt: now, executedAt: status === "EXECUTED" ? now : null,
       }).returning();
 
@@ -153,7 +188,7 @@ export async function POST(
           commandId: createdCommand.id, commandType, status, operationName: googleOpName }, processed: true,
       });
 
-      return NextResponse.json({ success: true, command: createdCommand });
+      return NextResponse.json({ success: true, command: createdCommand }, { headers: { "Cache-Control": "no-store" } });
     }
 
     await db.insert(auditLogs).values({
@@ -161,8 +196,8 @@ export async function POST(
       action: `COMMAND_FAILED_${commandType}`, resourceType: "DEVICE_COMMAND", resourceId: commandId,
       details: { deviceId: device.id, commandType }, status: "FAILURE",
     });
-    return NextResponse.json({ success: false, error: "Command failed" }, { status: 502 });
+    return NextResponse.json({ success: false, error: "Command failed" }, { status: 502, headers: { "Cache-Control": "no-store" } });
   } catch {
-    return NextResponse.json({ error: "Failed to issue command" }, { status: 500 });
+    return NextResponse.json({ error: "Failed to issue command" }, { status: 500, headers: { "Cache-Control": "no-store" } });
   }
 }
