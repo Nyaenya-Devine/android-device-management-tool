@@ -1,8 +1,9 @@
-# tests/test_workflow.py - the rules a reset can never break
+# tests/test_workflow.py - authentication and simulation safety regressions
 import json
 import os
 import sys
-import config
+from datetime import datetime, timezone, timedelta
+
 PROJECT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, PROJECT)
 
@@ -10,6 +11,7 @@ import authentication
 import authorization
 import device_simulator
 import reset_workflow
+import config
 
 
 def _tokens():
@@ -71,7 +73,9 @@ def test_session_expires():
     authentication.login("t_exp", "ExpPass!1")
     token = authentication.start_session("t_exp")
     sessions = authentication._load_sessions()
-    sessions[token]["created_at"] = "2020-01-01T00:00:00+00:00"
+    key = authentication._session_key(token)
+    assert key in sessions
+    sessions[key]["expires_at"] = "2020-01-01T00:00:00+00:00"
     authentication._save_sessions(sessions)
     assert authentication.check_session(token) is None
 
@@ -80,75 +84,55 @@ def test_wrong_password_rejected():
     authentication.create_user("t_wrong", "CorrectPass!1", "viewer")
     ok, msg = authentication.login("t_wrong", "WrongPass!1")
     assert not ok
-    # Generic message to prevent enumeration (fixed from "bad password")
     assert "invalid credentials" in msg
 
 
 def test_account_locks_after_three_failures():
     authentication.create_user("t_lock", "CorrectPass!1", "viewer")
-
     for _ in range(3):
         ok, msg = authentication.login("t_lock", "WrongPass!1")
         assert not ok
-
     ok, msg = authentication.login("t_lock", "CorrectPass!1")
     assert not ok
-    # P1: now includes time remaining, check substring
-    assert "account locked" in msg
+    # Lockout is intentionally indistinguishable from bad credentials.
+    assert msg == "invalid credentials"
+    users = authentication._load_users()
+    assert users["t_lock"]["failed"] >= config.MAX_FAILED_LOGINS
+    assert users["t_lock"]["locked_until"] is not None
 
 
 def test_lockout_auto_unlocks_after_time():
-    """P1: Test time-based auto-unlock"""
-    from datetime import datetime, timezone, timedelta
     authentication.create_user("t_lock_time", "CorrectPass!1", "viewer")
-
     for _ in range(3):
         authentication.login("t_lock_time", "WrongPass!1")
-
     ok, msg = authentication.login("t_lock_time", "CorrectPass!1")
     assert not ok
-    assert "account locked" in msg
-
-    # Simulate time passing by manually setting locked_until to past
+    assert msg == "invalid credentials"
     users = authentication._load_users()
     past = datetime.now(timezone.utc) - timedelta(minutes=20)
     users["t_lock_time"]["locked_until"] = past.isoformat()
     authentication._save_users(users)
-
-    # Should now be able to login
     ok, msg = authentication.login("t_lock_time", "CorrectPass!1")
     assert ok
     assert msg == "welcome"
 
 
 def test_password_strength_enforced():
-    """P1: Test password strength"""
-    # Too short should fail
-    ok = authentication.create_user("t_weak", "short", "viewer")
-    assert not ok
-    # Long enough should succeed
-    ok = authentication.create_user("t_strong", "StrongPass!123", "viewer")
-    assert ok
+    assert not authentication.create_user("t_weak", "short", "viewer")
+    assert authentication.create_user("t_strong", "StrongPass!123", "viewer")
 
 
 def test_role_whitelist():
-    """P1: Test role whitelist prevents injection"""
-    ok = authentication.create_user("t_badrole", "ValidPass!1", "superadmin")
-    assert not ok
-    ok = authentication.create_user("t_badrole2", "ValidPass!1", "admin'; DROP TABLE")
-    assert not ok
-    ok = authentication.create_user("t_goodrole", "ValidPass!1", "admin")
-    assert ok
+    assert not authentication.create_user("t_badrole", "ValidPass!1", "superadmin")
+    assert not authentication.create_user("t_badrole2", "ValidPass!1", "admin'; DROP TABLE")
+    assert authentication.create_user("t_goodrole", "ValidPass!1", "admin")
 
 
 def test_successful_login_resets_failed_counter():
     authentication.create_user("t_reset", "CorrectPass!1", "viewer")
-
     authentication.login("t_reset", "WrongPass!1")
     ok, msg = authentication.login("t_reset", "CorrectPass!1")
-
-    assert ok
-    assert msg == "welcome"
+    assert ok and msg == "welcome"
 
 
 def test_invalid_session_rejected():
@@ -159,11 +143,8 @@ def test_logout_invalidates_session():
     authentication.create_user("t_logout", "LogoutPass!1", "viewer")
     authentication.login("t_logout", "LogoutPass!1")
     token = authentication.start_session("t_logout")
-
     assert authentication.check_session(token) is not None
-
     authentication.end_session(token)
-
     assert authentication.check_session(token) is None
 
 
@@ -184,31 +165,26 @@ def test_admin_can_approve_reset():
 
 
 def test_unknown_user_generic_message():
-    # Ensure user enumeration is prevented
     ok, msg = authentication.login("nonexistent_user_12345", "whatever")
-    assert not ok
-    assert "invalid credentials" in msg
+    assert not ok and "invalid credentials" in msg
     assert "unknown user" not in msg
 
 
 def test_execute_logs_correct_actor():
-    # Regression test for bug: execute should log executor, not approver
     admin, ops = _tokens()
     ok, rid = reset_workflow.request_reset(ops, "AND-004")
     assert ok
     ok, _ = reset_workflow.approve_reset(admin, rid)
     assert ok
-    # Create second admin to execute
     authentication.create_user("t_admin2", "Admin2Pass!1", "admin")
     authentication.login("t_admin2", "Admin2Pass!1")
     admin2_token = authentication.start_session("t_admin2")
     ok, _ = reset_workflow.execute_reset(admin2_token, rid)
     assert ok
-    # Check last log entry actor is executor (t_admin2), not approver
     import security_logger
     ok_chain, _ = security_logger.verify_logs()
     assert ok_chain
-    with open(config.LOG_FILE, "r") as f:
+    with open(config.LOG_FILE, "r", encoding="utf-8") as f:
         lines = f.read().splitlines()
     last = json.loads(lines[-1])
     assert last["actor"] == "t_admin2"
@@ -217,25 +193,14 @@ def test_execute_logs_correct_actor():
 
 def test_audit_log_tampering_detected():
     import security_logger
-
-    security_logger.log_event(
-        "TEST_INTEGRITY",
-        "tester",
-        "original"
-    )
-
+    security_logger.log_event("TEST_INTEGRITY", "tester", "original")
     with open(config.LOG_FILE, "r", encoding="utf-8") as f:
         lines = f.read().splitlines()
-
     entry = json.loads(lines[-1])
     entry["outcome"] = "tampered"
-
     lines[-1] = json.dumps(entry)
-
     with open(config.LOG_FILE, "w", encoding="utf-8") as f:
         f.write("\n".join(lines) + "\n")
-
     ok, bad_line = security_logger.verify_logs()
-
     assert ok is False
     assert bad_line == len(lines)
