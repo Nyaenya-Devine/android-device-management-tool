@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import { useState } from "react";
 import {
   Smartphone,
   ShieldCheck,
@@ -21,6 +21,7 @@ import {
 import { FleetRiskHeatmap } from "./FleetRiskHeatmap";
 import ThreadHumorAndroid from "./ThreadHumorAndroid";
 import DeviceRemoteView from "./DeviceRemoteView";
+import { summarizeFleetPosture } from "@/lib/fleetPosture";
 
 interface FleetDashboardProps {
   devices: any[];
@@ -54,10 +55,8 @@ export function FleetDashboard({
   const dedicatedCount = devices.filter((d) => d.managementMode === "DEDICATED").length;
   const activeTokens = tokens.filter((t) => t.status === "ACTIVE").length;
   const nonCompliant = totalDevices - compliantDevices;
-
-  React.useEffect(() => {
-    if (!selectedLiveDevice && devices.length > 0) setSelectedLiveDevice(devices[0]);
-  }, [devices, selectedLiveDevice]);
+  const posture = summarizeFleetPosture(devices);
+  const activeLiveDevice = selectedLiveDevice ?? devices[0] ?? null;
 
   return (
     <div className="space-y-5 relative z-10">
@@ -85,14 +84,14 @@ export function FleetDashboard({
               Fleet Command <span className="text-[#3DDC84]">— Real Devices, Real Policies</span>
             </h1>
             <p className="text-[13px] leading-[1.6] text-white/50 max-w-3xl">
-              Legit Android Management API with CloudDPC QR provisioning, SafetyNet & Play Integrity attestation, fine-grained policy enforcement. Each client different policies like real workplace — ability to execute LOCK, REBOOT, WIPE that seem 100% real with visual proof.
+              AMAPI operations lab for enrollment, policy rollout, posture triage, and remote-command safety. Every action is simulated or API-backed and recorded with its operational context—never presented as proof of control before confirmation.
             </p>
             <div className="flex flex-wrap gap-2 pt-1">
               {[
                 `📱 ${totalDevices} devices`,
                 `✅ ${complianceRate}% compliant`,
-                `🔒 SEC-2024-07 enforced`,
-                `📡 dumpsys live`,
+                `🛡️ posture ${posture.averageScore}/100`,
+                `⚠️ ${posture.requiresAction} require action`,
               ].map(chip => (
                 <span key={chip} className="text-[11px] px-2.5 py-1 rounded-full bg-white/[0.04] border border-white/[0.06] text-white/50">{chip}</span>
               ))}
@@ -112,7 +111,7 @@ export function FleetDashboard({
               className="flex items-center justify-center gap-2 rounded-full border border-white/[0.08] bg-white/[0.04] px-6 py-3 text-[13px] font-medium text-white/70 hover:bg-white/[0.08] hover:text-white transition"
             >
               <Activity className="h-4 w-4 text-[#3DDC84]" />
-              <span>Run Diagnostics • SafetyNet Check</span>
+              <span>Run Diagnostics • Device Trust</span>
             </button>
             <p className="text-[10px] text-white/30 text-center font-mono">💡 Call center live — clients call, you greet first</p>
           </div>
@@ -197,7 +196,7 @@ export function FleetDashboard({
           </div>
           <div className="mt-4 space-y-2">
             <div className="flex items-center gap-2 text-[11px] text-white/50"><span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" /> CloudDPC receiver ON</div>
-            <div className="flex items-center gap-2 text-[11px] text-white/50"><span className="h-2 w-2 rounded-full bg-[#3DDC84] animate-pulse" /> SafetyNet attestation</div>
+            <div className="flex items-center gap-2 text-[11px] text-white/50"><span className="h-2 w-2 rounded-full bg-[#3DDC84] animate-pulse" /> Device Trust signals</div>
             <div className="flex items-center gap-2 text-[11px] text-white/50"><span className="h-2 w-2 rounded-full bg-violet-400 animate-pulse" /> Play Integrity API</div>
           </div>
         </div>
@@ -239,7 +238,7 @@ export function FleetDashboard({
                       : device.managementMode === "DEDICATED"
                       ? "bg-amber-500/10 text-amber-400 border-amber-500/20"
                       : "bg-[#8B5CF6]/10 text-[#8B5CF6] border-[#8B5CF6]/20";
-                  const isSelected = selectedLiveDevice?.id === device.id;
+                  const isSelected = activeLiveDevice?.id === device.id;
                   return (
                     <tr key={device.id} onClick={() => { onSelectDevice(device); setSelectedLiveDevice(device); }} className={`hover:bg-white/[0.03] transition-colors cursor-pointer group ${isSelected ? 'bg-[#3DDC84]/5' : ''}`}>
                       <td className="py-3 pr-2 pl-1">
@@ -264,8 +263,8 @@ export function FleetDashboard({
 
 
         <div className="col-span-12 lg:col-span-5 space-y-4">
-          {selectedLiveDevice ? (
-            <DeviceRemoteView device={selectedLiveDevice} onCommand={(cmd) => onDeviceAction?.(selectedLiveDevice.id, cmd)} />
+          {activeLiveDevice ? (
+            <DeviceRemoteView device={activeLiveDevice} onCommand={(cmd) => onDeviceAction?.(activeLiveDevice.id, cmd)} />
           ) : (
             <div className="rounded-[16px] bento-card p-5 h-[280px] flex items-center justify-center text-white/30 font-mono text-[12px]">Select device to see live view</div>
           )}
@@ -317,12 +316,12 @@ export function FleetDashboard({
         </div>
       </div>
 
-      {/* Clear expectations — like Influx would */}
+      {/* Clear operational expectations */}
       <div className="rounded-[16px] border border-[#3DDC84]/10 bg-[#3DDC84]/[0.04] backdrop-blur p-4">
         <div className="flex gap-3">
           <div className="h-8 w-8 rounded-full bg-[#3DDC84]/10 border border-[#3DDC84]/20 flex items-center justify-center shrink-0"><ShieldAlert className="h-4 w-4 text-[#3DDC84]" /></div>
           <div className="space-y-1.5">
-            <p className="text-[12px] font-semibold text-[#F5F3EF]">What to expect — Real Workplace Experience (Influx-level clarity)</p>
+            <p className="text-[12px] font-semibold text-[#F5F3EF]">Operational model — verify before high-impact action</p>
             <ul className="text-[11px] text-white/50 leading-[1.5] list-disc pl-4 space-y-1">
               <li><span className="text-white/70">Each device different policy</span> — like real enterprise: Sales needs Outlook, Field needs kiosk, Facilities needs compliance audit trail per SEC-2024-07</li>
               <li><span className="text-white/70">Device operations</span> — LOCK needs internet, WIPE is factory reset (cat photos gone if DO), REBOOT keeps data. Visual proof via live device view + dumpsys logs</li>
