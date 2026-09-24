@@ -35,16 +35,15 @@ jobs:
         run: |
           set -eu
           ! grep -R -E 'ghp_[A-Za-z0-9]{20,}|github_pat_[A-Za-z0-9_]{20,}' --exclude-dir=node_modules --exclude-dir=.next --exclude-dir=dist --exclude-dir=.git .
-      - name: Verify essential files
+      - name: Verify essential application files
         run: |
           set -eu
-          test -f electron.js
-          test -f preload.js
-          test -f src/components/LinkedInChatDock.tsx
-          test -f src/components/ToastSystem.tsx
-          test -f src/components/Logo.tsx
-          grep -q 'electron-updater' package.json
-          grep -q 'autoUpdater' electron.js
+          test -f next.config.ts
+          test -f src/proxy.ts
+          test -f src/app/api/devices/route.ts
+          test -f src/app/api/enterprise/route.ts
+          test -f src/components/FleetDashboard.tsx
+          test -f src/components/EnterpriseSettings.tsx
 
   sbom:
     name: SBOM — CycloneDX
