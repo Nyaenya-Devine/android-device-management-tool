@@ -1,45 +1,20 @@
 import { NextResponse, type NextRequest } from "next/server";
 
 /**
- * ANDROID DEVICE MANAGEMENT TOOL — BEST-IN-CLASS SECURITY PROXY
- * Nonce-based CSP with strict-dynamic, HSTS preload, locked Permissions-Policy
- * This is experimental/WIP — security must be production-grade even in demo
+ * Response hardening that is safe for statically rendered Next.js pages.
+ * The application CSP lives in next.config.ts so HTML and framework scripts
+ * receive one consistent policy in both local and Vercel builds.
  */
-
 export function proxy(request: NextRequest) {
-  const nonce = btoa(crypto.randomUUID());
+  const response = NextResponse.next();
   const isProd = process.env.NODE_ENV === "production";
 
-  const csp = [
-    `default-src 'self'`,
-    `script-src 'self' 'nonce-${nonce}' 'strict-dynamic'${isProd ? "" : " 'unsafe-eval'"}`,
-    `style-src 'self' 'unsafe-inline'`,
-    `img-src 'self' data: blob:`,
-    `font-src 'self' data:`,
-    `media-src 'self'`,
-    `connect-src 'self'${isProd ? "" : " ws: wss:"}`,
-    `object-src 'none'`,
-    `base-uri 'self'`,
-    `form-action 'self'`,
-    `frame-ancestors 'none'`,
-    `worker-src 'self' blob:`,
-    `manifest-src 'self'`,
-    ...(isProd ? ["upgrade-insecure-requests"] : []),
-  ].join("; ");
-
-  const requestHeaders = new Headers(request.headers);
-  requestHeaders.set("x-nonce", nonce);
-  requestHeaders.set("Content-Security-Policy", csp);
-
-  const response = NextResponse.next({ request: { headers: requestHeaders } });
-
-  response.headers.set("Content-Security-Policy", csp);
   response.headers.set("X-Content-Type-Options", "nosniff");
   response.headers.set("X-Frame-Options", "DENY");
   response.headers.set("Referrer-Policy", "strict-origin-when-cross-origin");
   response.headers.set(
     "Permissions-Policy",
-    "camera=(), microphone=(), geolocation=(), browsing-topics=(), interest-cohort=(), payment=(), usb=()"
+    "camera=(), microphone=(), geolocation=(), browsing-topics=(), payment=(), usb=()"
   );
   if (isProd) {
     response.headers.set(
@@ -51,7 +26,6 @@ export function proxy(request: NextRequest) {
   response.headers.set("Cross-Origin-Resource-Policy", "same-origin");
   response.headers.set("X-Permitted-Cross-Domain-Policies", "none");
   response.headers.delete("x-powered-by");
-
   return response;
 }
 
