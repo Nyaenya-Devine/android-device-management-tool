@@ -37,6 +37,9 @@ export default function AppHome() {
   const fetchData = useCallback(async (showLoading = false) => {
     if (showLoading) setIsRefreshing(true);
     try {
+      // Obtain a short-lived, HttpOnly session for this public simulation.
+      // Live deployments disable this endpoint and use their authenticated API client.
+      await fetch("/api/auth/demo", { method: "POST", credentials: "same-origin" });
       const [entRes, devRes, polRes, tokRes, logRes] = await Promise.all([
         fetch("/api/enterprise").then((r) => r.json()),
         fetch("/api/devices").then((r) => r.json()),

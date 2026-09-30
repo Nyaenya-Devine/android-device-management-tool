@@ -1,5 +1,5 @@
 import { NextRequest } from "next/server";
-import { timingSafeEqual } from "node:crypto";
+import { createHmac, timingSafeEqual } from "node:crypto";
 
 export type ApiRole = "viewer" | "operator" | "admin" | "security_analyst";
 
@@ -31,7 +31,19 @@ function configuredIdentity(prefix: "MDM_API" | "MDM_APPROVER"): ApiIdentity | n
   return { actor, role };
 }
 
+function demoIdentity(req: NextRequest): ApiIdentity | null {
+  if (process.env.MDM_PUBLIC_DEMO !== "true") return null;
+  const secret = process.env.CREDENTIALS_SECRET;
+  const session = req.cookies.get("mdm-demo")?.value;
+  if (!secret || secret.length < 32 || !session) return null;
+  const payload = "public-demo.operator.v1";
+  const expected = `${payload}.${createHmac("sha256", secret).update(payload).digest("base64url")}`;
+  return safeEqual(session, expected) ? { actor: "public-demo", role: "operator" } : null;
+}
+
 export function authenticateApiRequest(req: NextRequest): ApiIdentity | null {
+  const demo = demoIdentity(req);
+  if (demo) return demo;
   const configured = configuredIdentity("MDM_API");
   const supplied = bearer(req);
   if (!configured || !supplied || !safeEqual(supplied, process.env.MDM_API_TOKEN!)) return null;
