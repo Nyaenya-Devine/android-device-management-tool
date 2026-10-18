@@ -1,5 +1,6 @@
 "use client";
 
+import Image from 'next/image';
 import React, { useState } from "react";
 import {
   QrCode,
@@ -280,9 +281,12 @@ export function EnrollmentHub({
                 {/* QR Visual */}
                 <div className="relative rounded-2xl bg-white p-3 shadow-2xl flex-shrink-0">
                   {activeTokenModal.qrDataUrl ? (
-                    <img
+                    <Image
                       src={activeTokenModal.qrDataUrl}
                       alt="Android Enterprise CloudDPC QR Code"
+                      width={192}
+                      height={192}
+                      unoptimized
                       className="h-48 w-48 rounded-lg"
                     />
                   ) : (

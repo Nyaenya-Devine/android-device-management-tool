@@ -43,6 +43,12 @@ export default function VoiceDeviceCallCenter({ devices, onDeviceAction }: { dev
   const transcriptRef = useRef<HTMLDivElement>(null);
   const recognitionRef = useRef<any>(null);
   const synthRef = useRef<SpeechSynthesis | null>(null);
+  // handleUserVoice is declared further down the component, so the
+  // speech-recognition effect calls it through a ref. The ref is published by
+  // an effect declared after the function, so it is never "used before
+  // declared" (react-hooks/immutability) and the setup effect does not need
+  // handleUserVoice in its dependency list.
+  const handleUserVoiceRef = useRef<((text: string) => void) | null>(null);
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -62,7 +68,7 @@ export default function VoiceDeviceCallCenter({ devices, onDeviceAction }: { dev
             if (event.results[i].isFinal) final += t + ' ';
             else interim += t;
           }
-          if (final) { handleUserVoice(final.trim()); setLiveTranscript(''); }
+          if (final) { handleUserVoiceRef.current?.(final.trim()); setLiveTranscript(''); }
           else setLiveTranscript(interim);
         };
         recognitionRef.current = rec;
@@ -145,6 +151,11 @@ export default function VoiceDeviceCallCenter({ devices, onDeviceAction }: { dev
       speakClient(reply);
     }, 800);
   };
+
+  // Publish handleUserVoice to the ref for the speech-recognition effect.
+  useEffect(() => {
+    handleUserVoiceRef.current = handleUserVoice;
+  });
 
   const acceptCall = () => {
     if (!incoming) return;

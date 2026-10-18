@@ -31,12 +31,17 @@ export default function DeviceRemoteView({ device, onCommand }: Props) {
   const [logs, setLogs] = useState<string[]>([]);
   const [isLive, setIsLive] = useState(true);
 
-  useEffect(() => {
+  // Re-derive the screen mode when the device changes, using React's
+  // "adjust state during render" pattern. Writing state from an effect body
+  // causes an extra cascading render (react-hooks/set-state-in-effect).
+  const [lastDevice, setLastDevice] = useState(device);
+  if (device !== lastDevice) {
+    setLastDevice(device);
     if (device?.state === 'ACTIVE') setScreenMode(device?.complianceState === 'COMPLIANT' ? 'compliant' : 'noncompliant');
     else if (device?.managementMode === 'DEDICATED_DEVICE') setScreenMode('kiosk');
     else if (device?.state === 'LOST') setScreenMode('lost');
     else setScreenMode('noncompliant');
-  }, [device]);
+  }
 
   useEffect(() => {
     if (!isLive) return;

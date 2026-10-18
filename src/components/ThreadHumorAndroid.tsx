@@ -125,7 +125,7 @@ export default function ThreadHumorAndroid() {
               {current.isTrending && <span className="text-[10px] px-2 py-0.5 rounded-full bg-[#3DDC84]/10 text-[#3DDC84] border border-[#3DDC84]/20">🔥 {current.upvotes}⬆️</span>}
               <span className="text-[10px] text-white/30">• {current.author}</span>
             </div>
-            <div className="p-2.5 rounded-[12px] bg-[#08080A] border border-white/[0.06]"><p className="text-[12px] font-medium text-[#F5F3EF]">"{current.setup}"</p></div>
+            <div className="p-2.5 rounded-[12px] bg-[#08080A] border border-white/[0.06]"><p className="text-[12px] font-medium text-[#F5F3EF]">&quot;{current.setup}&quot;</p></div>
             <div className="p-2.5 rounded-[12px] bg-[#3DDC84]/10 border border-[#3DDC84]/20"><p className="text-[12px] text-[#F5F3EF] leading-[1.5]">{current.punchline}</p></div>
             <div className="flex flex-wrap gap-1">{current.tags.map(tag => <span key={tag} className="text-[9px] px-2 py-0.5 rounded-full bg-white/[0.04] text-white/30 border border-white/[0.06]">{tag}</span>)}</div>
           </motion.div>

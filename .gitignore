@@ -43,6 +43,10 @@ Screenshot *.png
 
 
 .next/
-node_modules/
+node_modules
 tsconfig.tsbuildinfo
 .vercel
+
+# Arena tooling metadata
+.arena-audit.json
+.arena-changes.json

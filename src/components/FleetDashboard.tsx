@@ -325,7 +325,7 @@ export function FleetDashboard({
             <ul className="text-[11px] text-white/50 leading-[1.5] list-disc pl-4 space-y-1">
               <li><span className="text-white/70">Each device different policy</span> — like real enterprise: Sales needs Outlook, Field needs kiosk, Facilities needs compliance audit trail per SEC-2024-07</li>
               <li><span className="text-white/70">Device operations</span> — LOCK needs internet, WIPE is factory reset (cat photos gone if DO), REBOOT keeps data. Visual proof via live device view + dumpsys logs</li>
-              <li><span className="text-white/70">Call center flowing</span> — Client says "Hello?" first → YOU greet first → intro → problem → troubleshooting back-and-forth with real actions → resolution. Voice + mic support</li>
+              <li><span className="text-white/70">Call center flowing</span> — Client says &quot;Hello?&quot; first → YOU greet first → intro → problem → troubleshooting back-and-forth with real actions → resolution. Voice + mic support</li>
               <li><span className="text-white/70">Community insights</span> — r/Intune, r/AndroidEnterprise, #SafetyNetFails, #QRHell, #WorksOnMyPixel — nasty good humor from real MDM horror</li>
             </ul>
           </div>
