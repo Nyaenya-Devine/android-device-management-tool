@@ -8,10 +8,6 @@ updates:
       time: "09:00"
       timezone: "Africa/Nairobi"
     open-pull-requests-limit: 10
-    labels:
-      - "dependencies"
-      - "security"
-      - "npm"
     commit-message:
       prefix: "chore"
       include: "scope"
@@ -41,10 +37,6 @@ updates:
       time: "09:00"
       timezone: "Africa/Nairobi"
     open-pull-requests-limit: 5
-    labels:
-      - "dependencies"
-      - "github-actions"
-      - "security"
     commit-message:
       prefix: "ci"
       include: "scope"
