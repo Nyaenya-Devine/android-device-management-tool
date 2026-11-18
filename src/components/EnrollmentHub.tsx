@@ -110,10 +110,10 @@ export function EnrollmentHub({
           <form onSubmit={handleGenerate} className="space-y-4 text-xs">
             {/* Policy Selection */}
             <div>
-              <label className="block font-semibold text-slate-300 mb-1.5">
+              <label htmlFor="f-target-enterprise-policy" className="block font-semibold text-slate-300 mb-1.5">
                 Target Enterprise Policy <span className="text-emerald-400">*</span>
               </label>
-              <select
+              <select id="f-target-enterprise-policy"
                 value={selectedPolicyId}
                 onChange={(e) => setSelectedPolicyId(e.target.value)}
                 className="w-full rounded-xl border border-slate-700 bg-slate-800/90 px-3 py-2 text-white focus:border-emerald-500 focus:outline-none"
@@ -163,10 +163,10 @@ export function EnrollmentHub({
             {/* Token Lifespan Duration */}
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="block font-semibold text-slate-300 mb-1.5">
+                <label htmlFor="f-token-validity-duration" className="block font-semibold text-slate-300 mb-1.5">
                   Token Validity Duration
                 </label>
-                <select
+                <select id="f-token-validity-duration"
                   value={durationDays}
                   onChange={(e) => setDurationDays(Number(e.target.value))}
                   className="w-full rounded-xl border border-slate-700 bg-slate-800/90 px-3 py-2 text-white focus:border-emerald-500 focus:outline-none"
@@ -179,10 +179,10 @@ export function EnrollmentHub({
               </div>
 
               <div>
-                <label className="block font-semibold text-slate-300 mb-1.5">
+                <label htmlFor="f-usage-limit" className="block font-semibold text-slate-300 mb-1.5">
                   Usage Limit
                 </label>
-                <select
+                <select id="f-usage-limit"
                   value={oneTimeUse ? "true" : "false"}
                   onChange={(e) => setOneTimeUse(e.target.value === "true")}
                   className="w-full rounded-xl border border-slate-700 bg-slate-800/90 px-3 py-2 text-white focus:border-emerald-500 focus:outline-none"
@@ -205,7 +205,7 @@ export function EnrollmentHub({
 
               <div className="grid grid-cols-2 gap-2">
                 <div>
-                  <input
+                  <input aria-label="WiFi SSID (e.g. Corp-WLAN)"
                     type="text"
                     value={wifiSsid}
                     onChange={(e) => setWifiSsid(e.target.value)}
@@ -214,7 +214,7 @@ export function EnrollmentHub({
                   />
                 </div>
                 <div>
-                  <input
+                  <input aria-label="WiFi Password"
                     type="password"
                     value={wifiPassword}
                     onChange={(e) => setWifiPassword(e.target.value)}
@@ -227,10 +227,10 @@ export function EnrollmentHub({
 
             {/* Additional Tag */}
             <div>
-              <label className="block font-semibold text-slate-300 mb-1">
+              <label htmlFor="f-batch-description-tag-optional" className="block font-semibold text-slate-300 mb-1">
                 Batch Description / Tag (Optional)
               </label>
-              <input
+              <input id="f-batch-description-tag-optional"
                 type="text"
                 value={additionalData}
                 onChange={(e) => setAdditionalData(e.target.value)}

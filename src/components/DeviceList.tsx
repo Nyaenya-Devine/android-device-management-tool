@@ -94,7 +94,7 @@ export function DeviceList({
         {/* Search */}
         <div className="relative flex-1 max-w-md">
           <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
-          <input
+          <input aria-label="Search by model, serial number, IMEI, or policy..."
             type="text"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
@@ -134,7 +134,7 @@ export function DeviceList({
           <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-slate-800 text-slate-400 mb-3">
             <Smartphone className="h-6 w-6" />
           </div>
-          <h3 className="text-base font-semibold text-white">No devices found</h3>
+          <h2 className="text-base font-semibold text-white">No devices found</h2>
           <p className="text-xs text-slate-400 max-w-sm mt-1">
             No devices matched your search or filter criteria. Try clearing the search query or enroll a new device.
           </p>
@@ -184,9 +184,9 @@ export function DeviceList({
 
                   {/* Device Title & Serial */}
                   <div className="space-y-1">
-                    <h3 className="text-base font-bold text-white group-hover:text-emerald-300 transition-colors">
+                    <h2 className="text-base font-bold text-white group-hover:text-emerald-300 transition-colors">
                       {device.model}
-                    </h3>
+                    </h2>
                     <p className="text-xs text-slate-400">
                       {device.manufacturer} • SN: <span className="font-mono text-slate-300">{device.serialNumber}</span>
                     </p>

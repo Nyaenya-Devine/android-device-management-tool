@@ -181,8 +181,8 @@ export function EnterpriseSettings({ enterprise, onUpdateEnterprise }: Enterpris
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
             <div>
-              <label className="block font-semibold text-slate-300 mb-1">Organization / Enterprise Name</label>
-              <input
+              <label htmlFor="f-organization-enterprise-name" className="block font-semibold text-slate-300 mb-1">Organization / Enterprise Name</label>
+              <input id="f-organization-enterprise-name"
                 type="text"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
@@ -191,10 +191,10 @@ export function EnterpriseSettings({ enterprise, onUpdateEnterprise }: Enterpris
             </div>
 
             <div>
-              <label className="block font-semibold text-slate-300 mb-1">
+              <label htmlFor="f-google-enterprise-id-enterprises-lc" className="block font-semibold text-slate-300 mb-1">
                 Google Enterprise ID (<code className="text-emerald-400">enterprises/LC...</code>)
               </label>
-              <input
+              <input id="f-google-enterprise-id-enterprises-lc"
                 type="text"
                 value={enterpriseId}
                 onChange={(e) => setEnterpriseId(e.target.value)}
@@ -203,8 +203,8 @@ export function EnterpriseSettings({ enterprise, onUpdateEnterprise }: Enterpris
             </div>
 
             <div>
-              <label className="block font-semibold text-slate-300 mb-1">Google Cloud Project ID</label>
-              <input
+              <label htmlFor="f-google-cloud-project-id" className="block font-semibold text-slate-300 mb-1">Google Cloud Project ID</label>
+              <input id="f-google-cloud-project-id"
                 type="text"
                 value={gcpProjectId}
                 onChange={(e) => setGcpProjectId(e.target.value)}
@@ -213,8 +213,8 @@ export function EnterpriseSettings({ enterprise, onUpdateEnterprise }: Enterpris
             </div>
 
             <div>
-              <label className="block font-semibold text-slate-300 mb-1">Service Account Client Email</label>
-              <input
+              <label htmlFor="f-service-account-client-email" className="block font-semibold text-slate-300 mb-1">Service Account Client Email</label>
+              <input id="f-service-account-client-email"
                 type="email"
                 value={serviceAccountEmail}
                 onChange={(e) => setServiceAccountEmail(e.target.value)}
@@ -224,10 +224,10 @@ export function EnterpriseSettings({ enterprise, onUpdateEnterprise }: Enterpris
             </div>
 
             <div className="sm:col-span-2">
-              <label className="block font-semibold text-slate-300 mb-1">
+              <label htmlFor="f-service-account-rsa-private-key-pem-form" className="block font-semibold text-slate-300 mb-1">
                 Service Account RSA Private Key (PEM format) {enterprise?.hasPrivateKey ? "(Key Stored Securely - Encrypted)" : ""}
               </label>
-              <textarea
+              <textarea id="f-service-account-rsa-private-key-pem-form"
                 rows={3}
                 value={serviceAccountPrivateKey}
                 onChange={(e) => setServiceAccountPrivateKey(e.target.value)}
@@ -255,8 +255,8 @@ export function EnterpriseSettings({ enterprise, onUpdateEnterprise }: Enterpris
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
             <div>
-              <label className="block font-semibold text-slate-300 mb-1">Pub/Sub Topic Name</label>
-              <input
+              <label htmlFor="f-pub-sub-topic-name" className="block font-semibold text-slate-300 mb-1">Pub/Sub Topic Name</label>
+              <input id="f-pub-sub-topic-name"
                 type="text"
                 value={pubsubTopic}
                 onChange={(e) => setPubsubTopic(e.target.value)}
@@ -265,8 +265,8 @@ export function EnterpriseSettings({ enterprise, onUpdateEnterprise }: Enterpris
             </div>
 
             <div>
-              <label className="block font-semibold text-slate-300 mb-1">Pub/Sub Subscription</label>
-              <input
+              <label htmlFor="f-pub-sub-subscription" className="block font-semibold text-slate-300 mb-1">Pub/Sub Subscription</label>
+              <input id="f-pub-sub-subscription"
                 type="text"
                 value={pubsubSubscription}
                 onChange={(e) => setPubsubSubscription(e.target.value)}

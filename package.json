@@ -1,7 +1,27 @@
 {
   "name": "android-device-management-tool",
+  "version": "1.0.0",
   "private": true,
   "description": "Android Enterprise MDM console - security-hardened, dual-mode (simulator + live AMAPI)",
+  "author": "Devine Nyaenya <devinenyaenya@gmail.com>",
+  "license": "MIT",
+  "homepage": "https://android-device-management-tool.vercel.app",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Nyaenya-Devine/android-device-management-tool.git"
+  },
+  "bugs": {
+    "url": "https://github.com/Nyaenya-Devine/android-device-management-tool/issues"
+  },
+  "keywords": [
+    "android-enterprise",
+    "mdm",
+    "amapi",
+    "endpoint-security",
+    "fleet-management",
+    "nextjs",
+    "typescript"
+  ],
   "scripts": {
     "dev": "next dev",
     "build": "next build",

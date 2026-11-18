@@ -134,7 +134,7 @@ export function TestSuiteViewer() {
                   <div>
                     <div className="flex items-center space-x-2">
                       <span className="font-mono text-xs text-slate-400">{test.id}</span>
-                      <h3 className="text-xs sm:text-sm font-bold text-white">{test.name}</h3>
+                      <h2 className="text-xs sm:text-sm font-bold text-white">{test.name}</h2>
                       <span className="rounded bg-slate-800 px-2 py-0.5 text-[10px] font-semibold text-slate-400">
                         {test.category}
                       </span>

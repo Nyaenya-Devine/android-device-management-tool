@@ -212,10 +212,10 @@ export function PolicyCenter({
                   }`}
                 >
                   <div className="flex items-center justify-between mb-1.5">
-                    <h3 className="text-sm font-bold text-white flex items-center space-x-2">
+                    <h2 className="text-sm font-bold text-white flex items-center space-x-2">
                       <Shield className={`h-4 w-4 ${isSelected ? "text-emerald-400" : "text-slate-400"}`} />
                       <span className="truncate">{policy.name}</span>
-                    </h3>
+                    </h2>
                     <span className="rounded bg-slate-800 px-2 py-0.5 text-[10px] font-semibold text-slate-300">
                       v{policy.version}
                     </span>
@@ -272,8 +272,8 @@ export function PolicyCenter({
               {/* General Info */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="block font-semibold text-slate-300 mb-1">Policy Display Name</label>
-                  <input
+                  <label htmlFor="f-policy-display-name" className="block font-semibold text-slate-300 mb-1">Policy Display Name</label>
+                  <input id="f-policy-display-name"
                     type="text"
                     value={formName}
                     onChange={(e) => setFormName(e.target.value)}
@@ -282,8 +282,8 @@ export function PolicyCenter({
                 </div>
 
                 <div>
-                  <label className="block font-semibold text-slate-300 mb-1">Description</label>
-                  <input
+                  <label htmlFor="f-description" className="block font-semibold text-slate-300 mb-1">Description</label>
+                  <input id="f-description"
                     type="text"
                     value={formDesc}
                     onChange={(e) => setFormDesc(e.target.value)}
@@ -301,8 +301,8 @@ export function PolicyCenter({
 
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                   <div>
-                    <label className="block text-[11px] text-slate-400 mb-1">Minimum PIN Length</label>
-                    <select
+                    <label htmlFor="f-minimum-pin-length" className="block text-[11px] text-slate-400 mb-1">Minimum PIN Length</label>
+                    <select id="f-minimum-pin-length"
                       value={minPasscodeLen}
                       onChange={(e) => setMinPasscodeLen(Number(e.target.value))}
                       className="w-full rounded-lg border border-slate-700 bg-slate-800 p-2 text-white"
@@ -315,8 +315,8 @@ export function PolicyCenter({
                   </div>
 
                   <div>
-                    <label className="block text-[11px] text-slate-400 mb-1">Complexity Quality</label>
-                    <select
+                    <label htmlFor="f-complexity-quality" className="block text-[11px] text-slate-400 mb-1">Complexity Quality</label>
+                    <select id="f-complexity-quality"
                       value={passcodeQuality}
                       onChange={(e) => setPasscodeQuality(e.target.value)}
                       className="w-full rounded-lg border border-slate-700 bg-slate-800 p-2 text-white"
@@ -329,8 +329,8 @@ export function PolicyCenter({
                   </div>
 
                   <div>
-                    <label className="block text-[11px] text-slate-400 mb-1">Max Failed Attempts (Wipe)</label>
-                    <select
+                    <label htmlFor="f-max-failed-attempts-wipe" className="block text-[11px] text-slate-400 mb-1">Max Failed Attempts (Wipe)</label>
+                    <select id="f-max-failed-attempts-wipe"
                       value={maxFailedPasscode}
                       onChange={(e) => setMaxFailedPasscode(Number(e.target.value))}
                       className="w-full rounded-lg border border-slate-700 bg-slate-800 p-2 text-white"
@@ -399,10 +399,10 @@ export function PolicyCenter({
 
                 {kioskModeEnabled && (
                   <div className="pt-2">
-                    <label className="block text-[11px] text-slate-400 mb-1">
+                    <label htmlFor="f-kiosk-application-android-package-name" className="block text-[11px] text-slate-400 mb-1">
                       Kiosk Application Android Package Name
                     </label>
-                    <input
+                    <input id="f-kiosk-application-android-package-name"
                       type="text"
                       value={kioskPackage}
                       onChange={(e) => setKioskPackage(e.target.value)}

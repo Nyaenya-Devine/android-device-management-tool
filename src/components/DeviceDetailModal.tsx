@@ -213,7 +213,7 @@ export function DeviceDetailModal({
 
               {/* Hardware Identifiers */}
               <div className="rounded-xl border border-slate-800 bg-slate-950/40 p-4">
-                <h4 className="text-xs font-semibold text-white mb-3">Enterprise Device Identifiers</h4>
+                <h3 className="text-xs font-semibold text-white mb-3">Enterprise Device Identifiers</h3>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
                   <div className="flex items-center justify-between rounded-lg bg-slate-900 p-2.5">
                     <span className="text-slate-400">Google AMAPI Device Name:</span>
@@ -255,7 +255,7 @@ export function DeviceDetailModal({
               <div className="rounded-xl border border-slate-800 bg-slate-950/40 p-4 space-y-4">
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                   <div>
-                    <h4 className="text-sm font-semibold text-white">Assigned Android Management Policy</h4>
+                    <h3 className="text-sm font-semibold text-white">Assigned Android Management Policy</h3>
                     <p className="text-xs text-slate-400">
                       Select and reassign policies to this device. AMAPI applies updates automatically over CloudDPC.
                     </p>
@@ -263,6 +263,7 @@ export function DeviceDetailModal({
 
                   <div className="flex items-center space-x-2">
                     <select
+                      aria-label="Assigned Android Management Policy"
                       value={selectedPolicyId}
                       onChange={(e) => handlePolicyChange(e.target.value)}
                       className="rounded-lg border border-slate-700 bg-slate-800 px-3 py-1.5 text-xs text-white focus:border-emerald-500 focus:outline-none"
@@ -369,8 +370,8 @@ export function DeviceDetailModal({
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
                     <div>
-                      <label className="text-[10px] text-slate-400">Lost Screen Message</label>
-                      <input
+                      <label htmlFor="f-lost-screen-message" className="text-[10px] text-slate-400">Lost Screen Message</label>
+                      <input id="f-lost-screen-message"
                         type="text"
                         value={lostModeMessage}
                         onChange={(e) => setLostModeMessage(e.target.value)}
@@ -378,8 +379,8 @@ export function DeviceDetailModal({
                       />
                     </div>
                     <div>
-                      <label className="text-[10px] text-slate-400">Owner Contact Phone</label>
-                      <input
+                      <label htmlFor="f-owner-contact-phone" className="text-[10px] text-slate-400">Owner Contact Phone</label>
+                      <input id="f-owner-contact-phone"
                         type="text"
                         value={lostModePhone}
                         onChange={(e) => setLostModePhone(e.target.value)}

@@ -89,10 +89,10 @@ export function CommandConsole({ devices, onIssueCommand }: CommandConsoleProps)
           <form onSubmit={handleExecute} className="space-y-4 text-xs">
             {/* Target Device */}
             <div>
-              <label className="block font-semibold text-slate-300 mb-1.5">
+              <label htmlFor="f-target-device" className="block font-semibold text-slate-300 mb-1.5">
                 Target Device <span className="text-emerald-400">*</span>
               </label>
-              <select
+              <select id="f-target-device"
                 value={selectedDeviceId}
                 onChange={(e) => setSelectedDeviceId(e.target.value)}
                 className="w-full rounded-xl border border-slate-700 bg-slate-800 px-3 py-2 text-white focus:border-emerald-500 focus:outline-none"
@@ -144,8 +144,8 @@ export function CommandConsole({ devices, onIssueCommand }: CommandConsoleProps)
             {commandType === "START_LOST_MODE" && (
               <div className="rounded-xl border border-slate-800 bg-slate-950/40 p-3.5 space-y-2">
                 <div>
-                  <label className="block text-[10px] text-slate-400 mb-1">Lost Screen Message</label>
-                  <input
+                  <label htmlFor="f-lost-screen-message" className="block text-[10px] text-slate-400 mb-1">Lost Screen Message</label>
+                  <input id="f-lost-screen-message"
                     type="text"
                     value={lostMessage}
                     onChange={(e) => setLostMessage(e.target.value)}
@@ -153,8 +153,8 @@ export function CommandConsole({ devices, onIssueCommand }: CommandConsoleProps)
                   />
                 </div>
                 <div>
-                  <label className="block text-[10px] text-slate-400 mb-1">Owner Contact Phone</label>
-                  <input
+                  <label htmlFor="f-owner-contact-phone" className="block text-[10px] text-slate-400 mb-1">Owner Contact Phone</label>
+                  <input id="f-owner-contact-phone"
                     type="text"
                     value={lostPhone}
                     onChange={(e) => setLostPhone(e.target.value)}
@@ -166,8 +166,8 @@ export function CommandConsole({ devices, onIssueCommand }: CommandConsoleProps)
 
             {commandType === "RESET_PASSWORD" && (
               <div className="rounded-xl border border-slate-800 bg-slate-950/40 p-3.5">
-                <label className="block text-[10px] text-slate-400 mb-1">New Lock PIN / Passcode</label>
-                <input
+                <label htmlFor="f-new-lock-pin-passcode" className="block text-[10px] text-slate-400 mb-1">New Lock PIN / Passcode</label>
+                <input id="f-new-lock-pin-passcode"
                   type="text"
                   value={passcode}
                   onChange={(e) => setPasscode(e.target.value)}

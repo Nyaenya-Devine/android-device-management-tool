@@ -106,7 +106,7 @@ export function AuditLogViewer({ logs, pubsubMessages }: AuditLogViewerProps) {
       {/* Search Bar */}
       <div className="relative max-w-md">
         <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
-        <input
+        <input aria-label="Filter logs by action, actor, or ID..."
           type="text"
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
@@ -181,10 +181,10 @@ export function AuditLogViewer({ logs, pubsubMessages }: AuditLogViewerProps) {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4 backdrop-blur-sm">
           <div className="w-full max-w-2xl rounded-2xl border border-slate-800 bg-slate-900 p-6 shadow-2xl space-y-4">
             <div className="flex items-center justify-between border-b border-slate-800 pb-3">
-              <h3 className="text-sm font-bold text-white flex items-center space-x-2">
+              <h2 className="text-sm font-bold text-white flex items-center space-x-2">
                 <FileText className="h-4 w-4 text-emerald-400" />
                 <span>Event Payload Inspector</span>
-              </h3>
+              </h2>
               <button
                 onClick={() => setInspectedPayload(null)}
                 className="text-xs text-slate-400 hover:text-white"

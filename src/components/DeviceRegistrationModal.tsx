@@ -75,8 +75,8 @@ export function DeviceRegistrationModal({
         <form onSubmit={handleSubmit} className="space-y-4 text-xs">
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block font-semibold text-slate-300 mb-1">Manufacturer</label>
-              <input
+              <label htmlFor="f-manufacturer" className="block font-semibold text-slate-300 mb-1">Manufacturer</label>
+              <input id="f-manufacturer"
                 type="text"
                 value={manufacturer}
                 onChange={(e) => setManufacturer(e.target.value)}
@@ -86,8 +86,8 @@ export function DeviceRegistrationModal({
             </div>
 
             <div>
-              <label className="block font-semibold text-slate-300 mb-1">Model Name</label>
-              <input
+              <label htmlFor="f-model-name" className="block font-semibold text-slate-300 mb-1">Model Name</label>
+              <input id="f-model-name"
                 type="text"
                 value={model}
                 onChange={(e) => setModel(e.target.value)}
@@ -99,8 +99,8 @@ export function DeviceRegistrationModal({
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block font-semibold text-slate-300 mb-1">Serial Number</label>
-              <input
+              <label htmlFor="f-serial-number" className="block font-semibold text-slate-300 mb-1">Serial Number</label>
+              <input id="f-serial-number"
                 type="text"
                 value={serialNumber}
                 onChange={(e) => setSerialNumber(e.target.value)}
@@ -110,8 +110,8 @@ export function DeviceRegistrationModal({
             </div>
 
             <div>
-              <label className="block font-semibold text-slate-300 mb-1">IMEI Number (Optional)</label>
-              <input
+              <label htmlFor="f-imei-number-optional" className="block font-semibold text-slate-300 mb-1">IMEI Number (Optional)</label>
+              <input id="f-imei-number-optional"
                 type="text"
                 value={imei}
                 onChange={(e) => setImei(e.target.value)}
@@ -122,8 +122,8 @@ export function DeviceRegistrationModal({
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block font-semibold text-slate-300 mb-1">Management Mode</label>
-              <select
+              <label htmlFor="f-management-mode" className="block font-semibold text-slate-300 mb-1">Management Mode</label>
+              <select id="f-management-mode"
                 value={managementMode}
                 onChange={(e) => setManagementMode(e.target.value as ManagementMode)}
                 className="w-full rounded-xl border border-slate-700 bg-slate-800 p-2 text-white"
@@ -135,8 +135,8 @@ export function DeviceRegistrationModal({
             </div>
 
             <div>
-              <label className="block font-semibold text-slate-300 mb-1">Assign Policy</label>
-              <select
+              <label htmlFor="f-assign-policy" className="block font-semibold text-slate-300 mb-1">Assign Policy</label>
+              <select id="f-assign-policy"
                 value={policyId}
                 onChange={(e) => setPolicyId(e.target.value)}
                 className="w-full rounded-xl border border-slate-700 bg-slate-800 p-2 text-white"

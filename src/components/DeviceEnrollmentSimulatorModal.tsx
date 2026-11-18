@@ -144,8 +144,8 @@ export function DeviceEnrollmentSimulatorModal({
         <form onSubmit={handleSimulatePair} className="space-y-3.5 text-xs">
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block font-semibold text-slate-300 mb-1">Manufacturer</label>
-              <input
+              <label htmlFor="f-manufacturer" className="block font-semibold text-slate-300 mb-1">Manufacturer</label>
+              <input id="f-manufacturer"
                 type="text"
                 value={manufacturer}
                 onChange={(e) => setManufacturer(e.target.value)}
@@ -155,8 +155,8 @@ export function DeviceEnrollmentSimulatorModal({
             </div>
 
             <div>
-              <label className="block font-semibold text-slate-300 mb-1">Model Name</label>
-              <input
+              <label htmlFor="f-model-name" className="block font-semibold text-slate-300 mb-1">Model Name</label>
+              <input id="f-model-name"
                 type="text"
                 value={model}
                 onChange={(e) => setModel(e.target.value)}
@@ -167,8 +167,8 @@ export function DeviceEnrollmentSimulatorModal({
           </div>
 
           <div>
-            <label className="block font-semibold text-slate-300 mb-1">Serial Number</label>
-            <input
+            <label htmlFor="f-serial-number" className="block font-semibold text-slate-300 mb-1">Serial Number</label>
+            <input id="f-serial-number"
               type="text"
               value={serialNumber}
               onChange={(e) => setSerialNumber(e.target.value)}
